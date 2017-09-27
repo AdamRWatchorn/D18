@@ -97,6 +97,63 @@ struct ray2D makeLightSourceRay(void)
  return(ray);
 }
 
+void angle(double *theta, struct point2D *vector) {
+
+// probably won't work. may need &
+
+   if(vector->px > 0 && vector->py > 0) {
+      *theta = atan(vector->py/vector->px);
+//      fprintf(stderr,"vector=(%f, %f)\n",vector->px, vector->py);
+   }
+   else if(vector->px < 0 && vector->py > 0) {
+      *theta = PI - atan(vector->py/vector->px);
+   }
+   else if(vector->px < 0 && vector->py < 0) {
+      *theta = PI + atan(vector->py/vector->px);
+   }
+   else if(vector->px > 0 && vector->py < 0) {
+      *theta = (2*PI) + atan(vector->py/vector->px);
+   }
+   else if(vector->px > 0 && vector->py == 0) {
+      *theta = atan(vector->py/vector->px);
+   }
+   else if(vector->px == 0 && vector->py > 0) {
+      *theta = (PI/2);
+   }
+   else if(vector->px < 0 && vector->py == 0) {
+      *theta = PI;
+   }
+   else if(vector->px == 0 && vector->py < 0) {
+      *theta = ((3*PI)/2);
+   }
+
+}
+
+void rotation(double *theta, struct point2D *vector) {
+
+   vector->px = vector->px*cos(*theta) - vector->py*sin(*theta);
+
+   vector->py = vector->px*sin(*theta) + vector->py*cos(*theta);
+
+}
+
+void reflectionX(struct point2D *vector) {
+
+   vector->py = -vector->py;
+
+}
+
+void invertXDir(struct point2D *vector) {
+
+   vector->px = -vector->px;
+}
+
+void invertDirection(struct point2D *vector) {
+
+   vector->px = -vector->px;
+   vector->py = -vector->py;
+}
+
 void propagateRay(struct ray2D *ray, int depth)
 {
  /*
@@ -136,9 +193,9 @@ void propagateRay(struct ray2D *ray, int depth)
   ********************************************************************************/
  
  // Define your local variables here
- struct point2D p1wall, norm, diff, intersection;
+ struct point2D p1wall, norm, diff, intersection, closestNorm;
  struct wall2D closestWall;
- double lambda, prevlambda = INFINITY;
+ double lambda, prevlambda = INFINITY, theta, phi, diffAngle;
  int inter_mat_type;
 
  if (depth>=max_depth) return;	 	// Leave this be, it makes sure you don't
@@ -161,14 +218,26 @@ void propagateRay(struct ray2D *ray, int depth)
    p1wall.px = walls[i].w.p.px + walls[i].w.d.px;
    p1wall.py = walls[i].w.p.py + walls[i].w.d.py;
 
+//   fprintf(stderr,"wallpoint=(%f,%f)\n",p1wall.px,p1wall.py);
+
    diff.px = p1wall.px - ray->p.px;
    diff.py = p1wall.py - ray->p.py;
 
-   norm.px = walls[i].w.d.py;
-   norm.py = -walls[i].w.d.px;
+//   fprintf(stderr,"diff=(%f,%f)\n",diff.px,diff.py);
+
+   norm.px = -walls[i].w.d.py;
+   norm.py = walls[i].w.d.px;
+
+   normalize(&norm);
+
+   /// points norm inwards
+   //invertDirection(&norm);
+
+//   fprintf(stderr,"norm=(%f,%f)\n",norm.px,norm.py);
 
    lambda = dot(&diff, &norm) / dot(&ray->d, &norm);
-   //walls[i]
+
+   fprintf(stderr,"lambda=(%f)\n",lambda);
 
    if (lambda > 0) {
 
@@ -177,6 +246,8 @@ void propagateRay(struct ray2D *ray, int depth)
          intersection.px = ray->p.px + lambda*ray->d.px;
          intersection.py = ray->p.py + lambda*ray->d.py;
          inter_mat_type = walls[i].material_type;
+         closestNorm.px = norm.px;
+         closestNorm.py = norm.py;
          prevlambda = lambda;
       }      
    }
@@ -199,6 +270,9 @@ void propagateRay(struct ray2D *ray, int depth)
  //          the origin of the ray, and the intersection point (it will then draw a
  //          ray from the origin to the intersection). You also need to provide the
  //          ray's colour.
+
+   fprintf(stderr,"intersection=(%f,%f)\n",intersection.px,intersection.py);
+
  renderRay(&ray->p,&intersection,ray->R,ray->G,ray->B);
 
 
@@ -243,10 +317,76 @@ void propagateRay(struct ray2D *ray, int depth)
  //			             modulated by Rt. Trace this ray.
  //	That's it! you're done!
 
- if(inter_mat_type == 1) {
+
+ // norm has only a point, no direction
+ // functions require double pointer and point2D pointer
+ if (inter_mat_type == 0) {
+
+   fprintf(stderr,"norm=(%f,%f)\n",closestNorm.px,closestNorm.py);
+
+   angle(&theta, &closestNorm);
+
+//   rotation(&theta, &norm);
+
+//   theta = -theta;
+
+   fprintf(stderr,"theta=(%f)\n",theta);
+
+   rotation(&theta, &ray->d);
+
+//   angle(&phi, &ray->d);
+
+   fprintf(stderr,"phi=(%f)\n",phi);
+
+//   diffAngle = theta - phi;
+
+//   if(diffAngle < 0) {
+//     diffAngle = -diffAngle;
+//   }
+
+//   diffAngle = (2*diffAngle);
+
+   fprintf(stderr,"diff=(%f)\n",diffAngle);
+
+   rotation(&diffAngle, &ray->d);
+
+   reflectionX(&ray->d);
+
+//   phi = (2*phi);
+
+//   rotation(&phi, &ray->d);
+
+//   theta = -theta;
+
+//   rotation(&theta, &ray->d);
+
+//   invertXDir(&ray->d);
+
+//   invertDirection(&ray->d);
+
+   normalize(&ray->d);
+
+   fprintf(stderr,"rayD=(%f,%f)\n",ray->d.px,ray->d.py);
+
+   ray->p.px = intersection.px;
+   ray->p.py = intersection.py;
+
+   fprintf(stderr,"rayP=(%f,%f)\n",ray->p.px,ray->p.py);
 
 
  }
+ else if(inter_mat_type == 1) {
+
+
+ }
+ else if(inter_mat_type == 2) {
+
+
+ }
+
+ depth += 1;
+
+ propagateRay(ray, depth);
    
 }
 

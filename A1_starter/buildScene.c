@@ -63,7 +63,7 @@ void buildWalls(void)
  d.py=0;
  walls[0].w.p=p;
  walls[0].w.d=d;
- walls[0].material_type=1;		// Change to 0 to make the walls mirror-reflecting!
+ walls[0].material_type=0;		// Change to 0 to make the walls mirror-reflecting!
  
  p.px=W_RIGHT;
  p.py=W_TOP;
@@ -71,7 +71,7 @@ void buildWalls(void)
  d.py=W_BOTTOM-W_TOP;
  walls[1].w.p=p;
  walls[1].w.d=d;
- walls[1].material_type=1;
+ walls[1].material_type=0;
 
  p.px=W_RIGHT;
  p.py=W_BOTTOM;
@@ -79,7 +79,7 @@ void buildWalls(void)
  d.py=0;
  walls[2].w.p=p;
  walls[2].w.d=d;
- walls[2].material_type=1;
+ walls[2].material_type=0;
  
  p.px=W_LEFT;
  p.py=W_BOTTOM;
@@ -87,7 +87,7 @@ void buildWalls(void)
  d.py=W_TOP-W_BOTTOM;
  walls[3].w.p=p;
  walls[3].w.d=d;
- walls[3].material_type=1;
+ walls[3].material_type=0;
 }
 
 void buildScene(void)
@@ -106,9 +106,21 @@ void buildScene(void)
 
  p.px=0.0;			// Set a light source at the origin, pointing in direction
  p.py=0.0;			// (1.0, -.8)  (remember that Y increases downward!)
+
  d.px=1.0;			// This ray should hit both spheres, so you can test your
  d.py=-.8;			// intersection code. The closest sphere is reflecting, so
  normalize(&d);			// you can test your code for mirror-reflecting rays
+
+// d.px=-1.0;
+// d.py=.8;
+//   d.px=0.5;
+//   d.py=-.8;
+// d.px=1.0;		// horizontal
+// d.py=0.0;
+// d.px=.0;		// vertical
+// d.py=1.0;
+ normalize(&d);
+
  l.p=p;
  l.d=d;
  lightsource.l=l;
