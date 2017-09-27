@@ -99,14 +99,14 @@ struct ray2D makeLightSourceRay(void)
 
 void angle(double *theta, struct point2D *vector) {
 
-// probably won't work. may need &
+// probably won't work. may need to rethink + signs
 
    if(vector->px > 0 && vector->py > 0) {
       *theta = atan(vector->py/vector->px);
 //      fprintf(stderr,"vector=(%f, %f)\n",vector->px, vector->py);
    }
    else if(vector->px < 0 && vector->py > 0) {
-      *theta = PI - atan(vector->py/vector->px);
+      *theta = PI + atan(vector->py/vector->px);
    }
    else if(vector->px < 0 && vector->py < 0) {
       *theta = PI + atan(vector->py/vector->px);
