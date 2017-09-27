@@ -324,19 +324,34 @@ void propagateRay(struct ray2D *ray, int depth)
 
    fprintf(stderr,"norm=(%f,%f)\n",closestNorm.px,closestNorm.py);
 
+   // step 1
    angle(&theta, &closestNorm);
-
-//   rotation(&theta, &norm);
-
-//   theta = -theta;
 
    fprintf(stderr,"theta=(%f)\n",theta);
 
+   // step 2 (un)
+   // theta = -theta;
+   // rotation(&theta, &closestNorm);
+
+   //step 3 (un)
+   // rotation(&theta, &ray->d);
+
+   // step 4 (un)
+   // angle(&phi, &ray->d);
+
+   // step 5 (un)
+   // phi = -phi;
+   // rotation(&phi, &closestNorm);
+
+   // step 6 (un)
+   // theta = -theta;
+   // rotation(&theta, &closestNorm);
+   // ray->d = closestNorm;
+
+   // Below rotation seems to bypass all (un) steps
    rotation(&theta, &ray->d);
 
-//   angle(&phi, &ray->d);
-
-   fprintf(stderr,"phi=(%f)\n",phi);
+//   fprintf(stderr,"phi=(%f)\n",phi);
 
 //   diffAngle = theta - phi;
 
@@ -346,11 +361,11 @@ void propagateRay(struct ray2D *ray, int depth)
 
 //   diffAngle = (2*diffAngle);
 
-   fprintf(stderr,"diff=(%f)\n",diffAngle);
+//   fprintf(stderr,"diff=(%f)\n",diffAngle);
 
-   rotation(&diffAngle, &ray->d);
+//   rotation(&diffAngle, &ray->d);
 
-   reflectionX(&ray->d);
+//  reflectionX(&ray->d);
 
 //   phi = (2*phi);
 
@@ -360,9 +375,8 @@ void propagateRay(struct ray2D *ray, int depth)
 
 //   rotation(&theta, &ray->d);
 
-//   invertXDir(&ray->d);
-
-//   invertDirection(&ray->d);
+   // Step 7
+   invertDirection(&ray->d);
 
    normalize(&ray->d);
 
