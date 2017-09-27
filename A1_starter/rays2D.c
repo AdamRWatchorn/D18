@@ -131,21 +131,12 @@ void angle(double *theta, struct point2D *vector) {
 
 void rotation(double *theta, struct point2D *vector) {
 
-   vector->px = vector->px*cos(*theta) - vector->py*sin(*theta);
+   double px = vector->px, py = vector->py;
 
-   vector->py = vector->px*sin(*theta) + vector->py*cos(*theta);
+   vector->px = px*cos(*theta) - py*sin(*theta);
 
-}
+   vector->py = px*sin(*theta) + py*cos(*theta);
 
-void reflectionX(struct point2D *vector) {
-
-   vector->py = -vector->py;
-
-}
-
-void invertXDir(struct point2D *vector) {
-
-   vector->px = -vector->px;
 }
 
 void invertDirection(struct point2D *vector) {
@@ -193,10 +184,10 @@ void propagateRay(struct ray2D *ray, int depth)
   ********************************************************************************/
  
  // Define your local variables here
- struct point2D p1wall, norm, diff, intersection, closestNorm;
+ struct point2D p1wall, norm, diff, intersection, closestNorm, circInter;
  struct wall2D closestWall;
- double lambda, prevlambda = INFINITY, theta, phi, diffAngle;
- int inter_mat_type;
+ double lambda, prevlambda = INFINITY, theta, phi, r_dx;
+ int inter_mat_type, circ_mat_type;
 
  if (depth>=max_depth) return;	 	// Leave this be, it makes sure you don't
 					// recurse forever
@@ -262,16 +253,27 @@ void propagateRay(struct ray2D *ray, int depth)
  //          the point of intersection, normal at intersection, lambda, material type,
  //          and refraction index for the closest object hit by the ray.
 
+
+ intersectRay(ray, &circInter, &norm, &lambda, &circ_mat_type, &r_dx);
+
  
  // Step 3 - Check whether the closest intersection with objects is closer than the
  //          closest intersection with a wall. Choose whichever is closer.
+   if (lambda < prevlambda) {
+      intersection.px = circInter.px;
+      intersection.py = circInter.py;
+      inter_mat_type = circ_mat_type;
+      closestNorm.px = norm.px;
+      closestNorm.py = norm.py;
+      prevlambda = lambda;
+   }
 
  // Step 4 - Render the ray onto the image. Use renderRay(). Provide renderRay() with
  //          the origin of the ray, and the intersection point (it will then draw a
  //          ray from the origin to the intersection). You also need to provide the
  //          ray's colour.
 
-   fprintf(stderr,"intersection=(%f,%f)\n",intersection.px,intersection.py);
+//   fprintf(stderr,"intersection=(%f,%f)\n",intersection.px,intersection.py);
 
  renderRay(&ray->p,&intersection,ray->R,ray->G,ray->B);
 
@@ -327,64 +329,48 @@ void propagateRay(struct ray2D *ray, int depth)
    // step 1
    angle(&theta, &closestNorm);
 
-   fprintf(stderr,"theta=(%f)\n",theta);
+//   fprintf(stderr,"theta=(%f)\n",theta);
 
-   // step 2 (un)
-   // theta = -theta;
-   // rotation(&theta, &closestNorm);
+   theta = -theta;
 
-   //step 3 (un)
-   // rotation(&theta, &ray->d);
+   // Step 2
+   rotation(&theta, &closestNorm);
 
-   // step 4 (un)
-   // angle(&phi, &ray->d);
+   fprintf(stderr,"step 2=(%f,%f)\n",closestNorm.px,closestNorm.py);
 
-   // step 5 (un)
-   // phi = -phi;
-   // rotation(&phi, &closestNorm);
-
-   // step 6 (un)
-   // theta = -theta;
-   // rotation(&theta, &closestNorm);
-   // ray->d = closestNorm;
-
-   // Below rotation seems to bypass all (un) steps (oops)
-   //rotation(&theta, &ray->d);
-
-//   fprintf(stderr,"phi=(%f)\n",phi);
-
-//   diffAngle = theta - phi;
-
-//   if(diffAngle < 0) {
-//     diffAngle = -diffAngle;
-//   }
-
-//   diffAngle = (2*diffAngle);
-
-//   fprintf(stderr,"diff=(%f)\n",diffAngle);
-
-//   rotation(&diffAngle, &ray->d);
-
-//  reflectionX(&ray->d);
-
-//   phi = (2*phi);
-
-//   rotation(&phi, &ray->d);
-
-//   theta = -theta;
-
-//   rotation(&theta, &ray->d);
-
-   // hopefully correct below
-   invertDirection(&ray->d);
+   // Step 3
    rotation(&theta, &ray->d);
 
+   fprintf(stderr,"step 3=(%f,%f)\n",ray->d.px,ray->d.py);
+
+   // Step 4
+   angle(&phi, &ray->d);
+
+   fprintf(stderr,"step 4=(%f)\n",phi);
+
+   phi = -phi;
+
+   // Step 5
+   rotation(&phi, &closestNorm);
+
+   fprintf(stderr,"step 5=(%f,%f)\n",closestNorm.px,closestNorm.py);
+
+   // Step 6
+   theta = -theta;
+   rotation(&theta, &closestNorm);
+
+   fprintf(stderr,"step 6=(%f,%f)\n",closestNorm.px,closestNorm.py);
+
    // Step 7
-   invertDirection(&ray->d);
+   invertDirection(&closestNorm);
+
+   //Step 8
+   ray->d.px = closestNorm.px;
+   ray->d.py = closestNorm.py;
 
    normalize(&ray->d);
 
-   fprintf(stderr,"rayD=(%f,%f)\n",ray->d.px,ray->d.py);
+   fprintf(stderr,"rayD step 7=(%f,%f)\n",ray->d.px,ray->d.py);
 
    ray->p.px = intersection.px;
    ray->p.py = intersection.py;
@@ -460,5 +446,80 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
   *        intersection that will be needed to determine how to bounce/refract the
   *	   ray.
   * *******************************************************************************/
-   
+
+
+   struct point2D norm1, norm2;
+   double A, B, C, Constant, conB, conX, conY, h, k, radius, lambda1, lambda2, prevlambda = INFINITY;
+
+   for (int i = 0; i < MAX_OBJECTS; i++) {
+
+      if(objects[i].r > 0) {
+
+         h = objects[i].c.px;
+         k = objects[i].c.py;
+
+         A = dot(&ray->d, &ray->d);
+
+         conB = (((2 * h) * ray->d.px) + ((2 * k) * ray->d.py));
+
+         B = ((2 * dot(&ray->p, &ray->d)) - conB);
+
+         conX = ((h * h) - ((2 * h) * ray->p.px));
+
+         conY = ((k * k) - ((2 * k) * ray->p.py));
+
+         Constant = (conX + conY);
+
+         C = ((dot(&ray->p, &ray->p) - (radius * radius)) + Constant);
+
+
+         lambda1 = ((-B + ((B * B) - sqrt((4 * A) * C))) / (2 * A));
+
+         lambda2 = ((-B - ((B * B) - sqrt((4 * A) * C))) / (2 * A));
+
+      fprintf(stderr,"lambda1=(%f)\n",lambda1);
+      fprintf(stderr,"lambda2=(%f)\n",lambda2);
+
+// + k and h maybe need to be removed
+         norm1.px = ray->p.px + (lambda1 * ray->d.px) + h;
+         norm1.py = ray->p.py + (lambda1 * ray->d.py) + k;
+         invertDirection(&norm1);
+         normalize(&norm1);
+
+         fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
+
+         norm2.px = ray->p.px + (lambda2 * ray->d.px) + h;
+         norm2.py = ray->p.py + (lambda2 * ray->d.py) + k;
+         invertDirection(&norm2);
+         normalize(&norm2);
+
+         fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
+
+         if (lambda1 > 0 && lambda1 < lambda2) {
+
+            if (lambda1 < prevlambda) {
+               p->px = ray->p.px + lambda1*ray->d.px + h;
+               p->py = ray->p.py + lambda1*ray->d.py + k;
+               type = &objects[i].material_type;
+               n->px = norm1.px;
+               n->py = norm1.py;
+               lambda = &lambda1;
+               r_idx = &objects[i].r_idx;
+            }      
+         }
+         else if (lambda2 > 0 && lambda2 < lambda1) {
+            if (lambda2 < prevlambda) {
+               p->px = ray->p.px + lambda2*ray->d.px;
+               p->py = ray->p.py + lambda2*ray->d.py;
+               type = &objects[i].material_type;
+               n->px = norm2.px;
+               n->py = norm2.py;
+               lambda = &lambda2;
+               r_idx = &objects[i].r_idx;
+            }
+
+         }
+
+      }
+   }   
 }
