@@ -348,8 +348,8 @@ void propagateRay(struct ray2D *ray, int depth)
    // rotation(&theta, &closestNorm);
    // ray->d = closestNorm;
 
-   // Below rotation seems to bypass all (un) steps
-   rotation(&theta, &ray->d);
+   // Below rotation seems to bypass all (un) steps (oops)
+   //rotation(&theta, &ray->d);
 
 //   fprintf(stderr,"phi=(%f)\n",phi);
 
@@ -374,6 +374,10 @@ void propagateRay(struct ray2D *ray, int depth)
 //   theta = -theta;
 
 //   rotation(&theta, &ray->d);
+
+   // hopefully correct below
+   invertDirection(&ray->d);
+   rotation(&theta, &ray->d);
 
    // Step 7
    invertDirection(&ray->d);
