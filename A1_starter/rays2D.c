@@ -230,7 +230,7 @@ void propagateRay(struct ray2D *ray, int depth)
 
    fprintf(stderr,"lambda=(%f)\n",lambda);
 
-   if (lambda > 0) {
+   if (lambda > TOL) {
 
       if (lambda < prevlambda) {
          //closestWall = walls[i];
@@ -259,13 +259,18 @@ void propagateRay(struct ray2D *ray, int depth)
  
  // Step 3 - Check whether the closest intersection with objects is closer than the
  //          closest intersection with a wall. Choose whichever is closer.
-   if (lambda < prevlambda) {
-      intersection.px = circInter.px;
-      intersection.py = circInter.py;
-      inter_mat_type = circ_mat_type;
-      closestNorm.px = norm.px;
-      closestNorm.py = norm.py;
-      prevlambda = lambda;
+
+   fprintf(stderr,"circle lambda=(%f)\n",lambda);
+
+   if (lambda > TOL) {
+      if (lambda < prevlambda) {
+         intersection.px = circInter.px;
+         intersection.py = circInter.py;
+         inter_mat_type = circ_mat_type;
+         closestNorm.px = norm.px;
+         closestNorm.py = norm.py;
+         prevlambda = lambda;
+      }
    }
 
  // Step 4 - Render the ray onto the image. Use renderRay(). Provide renderRay() with
@@ -319,6 +324,7 @@ void propagateRay(struct ray2D *ray, int depth)
  //			             modulated by Rt. Trace this ray.
  //	That's it! you're done!
 
+   fprintf(stderr,"chosen lambda=(%f)\n",prevlambda);
 
  // norm has only a point, no direction
  // functions require double pointer and point2D pointer
@@ -457,12 +463,17 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
 
          h = objects[i].c.px;
          k = objects[i].c.py;
+         radius = objects[i].r;
 
          A = dot(&ray->d, &ray->d);
+
+//         fprintf(stderr,"A=(%f)\n",A);
 
          conB = (((2 * h) * ray->d.px) + ((2 * k) * ray->d.py));
 
          B = ((2 * dot(&ray->p, &ray->d)) - conB);
+
+//         fprintf(stderr,"B=(%f)\n",B);
 
          conX = ((h * h) - ((2 * h) * ray->p.px));
 
@@ -472,50 +483,77 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
 
          C = ((dot(&ray->p, &ray->p) - (radius * radius)) + Constant);
 
+//         fprintf(stderr,"C=(%f)\n",C);
 
-         lambda1 = ((-B + ((B * B) - sqrt((4 * A) * C))) / (2 * A));
+//         fprintf(stderr,"h=(%f)\n",h);
 
-         lambda2 = ((-B - ((B * B) - sqrt((4 * A) * C))) / (2 * A));
+//         fprintf(stderr,"h^2=(%f)\n",(h*h));
 
-      fprintf(stderr,"lambda1=(%f)\n",lambda1);
-      fprintf(stderr,"lambda2=(%f)\n",lambda2);
+//         fprintf(stderr,"k=(%f)\n",k);
+
+//         fprintf(stderr,"k^2=(%f)\n",(k*k));
+
+//         fprintf(stderr,"um?=(%f)\n",((B * B) - ((4 * A) * C)));
+
+         lambda1 = ((-B + sqrt((B * B) - ((4 * A) * C))) / (2 * A));
+
+         lambda2 = ((-B - sqrt((B * B) - ((4 * A) * C))) / (2 * A));
+
+         fprintf(stderr,"lambda1=(%f)\n",lambda1);
+         fprintf(stderr,"lambda2=(%f)\n",lambda2);
 
 // + k and h maybe need to be removed
-         norm1.px = ray->p.px + (lambda1 * ray->d.px) + h;
-         norm1.py = ray->p.py + (lambda1 * ray->d.py) + k;
-         invertDirection(&norm1);
-         normalize(&norm1);
 
-         fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
+//         fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
 
-         norm2.px = ray->p.px + (lambda2 * ray->d.px) + h;
-         norm2.py = ray->p.py + (lambda2 * ray->d.py) + k;
-         invertDirection(&norm2);
-         normalize(&norm2);
+       // norm2.px = ray->p.px + (lambda2 * ray->d.px);
+       //  norm2.py = ray->p.py + (lambda2 * ray->d.py);
+       //  invertDirection(&norm2);
+       //  normalize(&norm2);
 
-         fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
+//         fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
 
-         if (lambda1 > 0 && lambda1 < lambda2) {
+         if (lambda1 > TOL && lambda1 < lambda2) {
 
             if (lambda1 < prevlambda) {
-               p->px = ray->p.px + lambda1*ray->d.px + h;
-               p->py = ray->p.py + lambda1*ray->d.py + k;
+               p->px = ray->p.px + lambda2*ray->d.px;
+               p->py = ray->p.py + lambda2*ray->d.py;
                type = &objects[i].material_type;
+
+               norm1.px = (2 * (p->px - h));
+               norm1.py = (2 * (p->py - k));
+               invertDirection(&norm1);
+               normalize(&norm1);
+
+               fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
+
+
                n->px = norm1.px;
                n->py = norm1.py;
-               lambda = &lambda1;
+               *lambda = lambda1;
                r_idx = &objects[i].r_idx;
             }      
          }
-         else if (lambda2 > 0 && lambda2 < lambda1) {
+         else if (lambda2 > TOL && lambda2 < lambda1) {
             if (lambda2 < prevlambda) {
                p->px = ray->p.px + lambda2*ray->d.px;
                p->py = ray->p.py + lambda2*ray->d.py;
                type = &objects[i].material_type;
+
+               norm2.px = (2 * (p->px - h));
+               norm2.py = (2 * (p->py - k));
+               invertDirection(&norm2);
+               normalize(&norm2);
+
+               fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
+
                n->px = norm2.px;
                n->py = norm2.py;
-               lambda = &lambda2;
+//               lambda = &lambda2;
+               *lambda = lambda2;
                r_idx = &objects[i].r_idx;
+
+               fprintf(stderr,"chosen lambda=(%f)\n",*lambda);
             }
 
          }
