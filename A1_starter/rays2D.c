@@ -30,18 +30,18 @@
 /*****************************************************************************
 * COMPLETE THIS TEXT BOX:
 *
-* 1) Student Name:		
+* 1) Student Name:	Adam Watchorn	
 * 2) Student Name:		
 *
-* 1) Student number:
+* 1) Student number:    1000867788
 * 2) Student number:
 * 
-* 1) UtorID
+* 1) UtorID watchor3
 * 2) UtorID
 * 
 * We hereby certify that the work contained here is our own
 *
-* ____________________             _____________________
+* ____Adam Watchorn___             _____________________
 * (sign with your name)            (sign with your name)
 ********************************************************************************/
 
@@ -80,30 +80,47 @@ struct ray2D makeLightSourceRay(void)
  
 // ray.p.px=0;			// Ray's origin
 // ray.p.py=0;
- ray.p = lightsource.l.p;
+
 // ray.d.px=1.0;			// Ray's direction
 // ray.d.py=-0.8;
- ray.d = lightsource.l.d;
- normalize(&ray.d);
- ray.inside_out=0;		// Initially 0 since the ray starts outside an object
- ray.monochromatic=0;		// Initially 0 since the ray is white (from lightsource)
-// ray.R=1.0;			// Ray colour in RGB must be the same as the lightsource
- ray.R = lightsource.R;
-// ray.G=1.0;
- ray.G = lightsource.G;
-// ray.B=1.0;
- ray.B = lightsource.B;
+
+
+   if (lightsource.light_type == 0) {
+
+      ray.p = lightsource.l.p;
+      ray.inside_out=0;		        // Initially 0 since the ray starts outside an object
+      ray.monochromatic=0;		// Initially 0 since the ray is white (from lightsource)
+                 			// Ray colour in RGB must be the same as the lightsource
+      ray.R = lightsource.R;
+      ray.G = lightsource.G;
+      ray.B = lightsource.B;
+
+      int randAngle = (PI*(rand()))/180;
+
+      ray.d.px = cos(randAngle);
+      ray.d.py = sin(randAngle);
+   }
+   else if (lightsource.light_type == 1) {
+
+      ray.p = lightsource.l.p;
+      ray.d = lightsource.l.d;
+      normalize(&ray.d);
+      ray.inside_out=0;		        // Initially 0 since the ray starts outside an object
+      ray.monochromatic=0;		// Initially 0 since the ray is white (from lightsource)
+
+      ray.R = lightsource.R;
+      ray.G = lightsource.G;
+      ray.B = lightsource.B;
+
+  }
  
  return(ray);
 }
 
 void angle(double *theta, struct point2D *vector) {
 
-// probably won't work. may need to rethink + signs
-
    if(vector->px > 0 && vector->py > 0) {
       *theta = atan(vector->py/vector->px);
-//      fprintf(stderr,"vector=(%f, %f)\n",vector->px, vector->py);
    }
    else if(vector->px < 0 && vector->py > 0) {
       *theta = PI + atan(vector->py/vector->px);
@@ -199,41 +216,24 @@ void propagateRay(struct ray2D *ray, int depth)
  // How many walls can the ray intersect? how many walls can the ray intersect in the
  // forward direction?
 
- // normal of lines: n = [dy, -dx], then normalize
-
- //lambda = [(p1wall - p0ray) dot n]/ [dray dot n]
-
  for (int i = 0; i < 4; i++) {
 
-   // origin + d
    p1wall.px = walls[i].w.p.px + walls[i].w.d.px;
    p1wall.py = walls[i].w.p.py + walls[i].w.d.py;
 
-//   fprintf(stderr,"wallpoint=(%f,%f)\n",p1wall.px,p1wall.py);
-
    diff.px = p1wall.px - ray->p.px;
    diff.py = p1wall.py - ray->p.py;
-
-//   fprintf(stderr,"diff=(%f,%f)\n",diff.px,diff.py);
 
    norm.px = -walls[i].w.d.py;
    norm.py = walls[i].w.d.px;
 
    normalize(&norm);
 
-   /// points norm inwards
-   //invertDirection(&norm);
-
-//   fprintf(stderr,"norm=(%f,%f)\n",norm.px,norm.py);
-
    lambda = dot(&diff, &norm) / dot(&ray->d, &norm);
-
-   fprintf(stderr,"lambda=(%f)\n",lambda);
 
    if (lambda > TOL) {
 
       if (lambda < prevlambda) {
-         //closestWall = walls[i];
          intersection.px = ray->p.px + lambda*ray->d.px;
          intersection.py = ray->p.py + lambda*ray->d.py;
          inter_mat_type = walls[i].material_type;
@@ -260,7 +260,6 @@ void propagateRay(struct ray2D *ray, int depth)
  // Step 3 - Check whether the closest intersection with objects is closer than the
  //          closest intersection with a wall. Choose whichever is closer.
 
-   fprintf(stderr,"circle lambda=(%f)\n",lambda);
 
    if (lambda > TOL) {
       if (lambda < prevlambda) {
@@ -278,7 +277,6 @@ void propagateRay(struct ray2D *ray, int depth)
  //          ray from the origin to the intersection). You also need to provide the
  //          ray's colour.
 
-//   fprintf(stderr,"intersection=(%f,%f)\n",intersection.px,intersection.py);
 
  renderRay(&ray->p,&intersection,ray->R,ray->G,ray->B);
 
@@ -324,48 +322,31 @@ void propagateRay(struct ray2D *ray, int depth)
  //			             modulated by Rt. Trace this ray.
  //	That's it! you're done!
 
-   fprintf(stderr,"chosen lambda=(%f)\n",prevlambda);
 
- // norm has only a point, no direction
- // functions require double pointer and point2D pointer
  if (inter_mat_type == 0) {
-
-   fprintf(stderr,"norm=(%f,%f)\n",closestNorm.px,closestNorm.py);
 
    // step 1
    angle(&theta, &closestNorm);
-
-//   fprintf(stderr,"theta=(%f)\n",theta);
 
    theta = -theta;
 
    // Step 2
    rotation(&theta, &closestNorm);
 
-   fprintf(stderr,"step 2=(%f,%f)\n",closestNorm.px,closestNorm.py);
-
    // Step 3
    rotation(&theta, &ray->d);
 
-   fprintf(stderr,"step 3=(%f,%f)\n",ray->d.px,ray->d.py);
-
    // Step 4
    angle(&phi, &ray->d);
-
-   fprintf(stderr,"step 4=(%f)\n",phi);
 
    phi = -phi;
 
    // Step 5
    rotation(&phi, &closestNorm);
 
-   fprintf(stderr,"step 5=(%f,%f)\n",closestNorm.px,closestNorm.py);
-
    // Step 6
    theta = -theta;
    rotation(&theta, &closestNorm);
-
-   fprintf(stderr,"step 6=(%f,%f)\n",closestNorm.px,closestNorm.py);
 
    // Step 7
    invertDirection(&closestNorm);
@@ -376,17 +357,52 @@ void propagateRay(struct ray2D *ray, int depth)
 
    normalize(&ray->d);
 
-   fprintf(stderr,"rayD step 7=(%f,%f)\n",ray->d.px,ray->d.py);
-
    ray->p.px = intersection.px;
    ray->p.py = intersection.py;
-
-   fprintf(stderr,"rayP=(%f,%f)\n",ray->p.px,ray->p.py);
 
 
  }
  else if(inter_mat_type == 1) {
 
+   // step 1
+   angle(&theta, &closestNorm);
+
+   theta = -theta;
+
+   // Step 2
+   rotation(&theta, &closestNorm);
+
+   // Step 3
+
+   int randAngle = (rand() % 90);
+
+   double randRAngle = ((PI * randAngle) / 180);
+
+
+   int sign = rand();
+
+   sign = (sign % 2);
+
+
+   if (sign = 0) {
+      randRAngle = randRAngle + ((3*PI)/2);
+   }
+
+   rotation(&randRAngle, &closestNorm);
+   theta = -theta;
+   rotation(&theta, &closestNorm);
+
+   // Step 7
+   invertDirection(&closestNorm);
+
+   //Step 8
+   ray->d.px = closestNorm.px;
+   ray->d.py = closestNorm.py;
+
+   normalize(&ray->d);
+
+   ray->p.px = intersection.px;
+   ray->p.py = intersection.py;
 
  }
  else if(inter_mat_type == 2) {
@@ -467,13 +483,9 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
 
          A = dot(&ray->d, &ray->d);
 
-//         fprintf(stderr,"A=(%f)\n",A);
-
          conB = (((2 * h) * ray->d.px) + ((2 * k) * ray->d.py));
 
          B = ((2 * dot(&ray->p, &ray->d)) - conB);
-
-//         fprintf(stderr,"B=(%f)\n",B);
 
          conX = ((h * h) - ((2 * h) * ray->p.px));
 
@@ -483,50 +495,21 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
 
          C = ((dot(&ray->p, &ray->p) - (radius * radius)) + Constant);
 
-//         fprintf(stderr,"C=(%f)\n",C);
-
-//         fprintf(stderr,"h=(%f)\n",h);
-
-//         fprintf(stderr,"h^2=(%f)\n",(h*h));
-
-//         fprintf(stderr,"k=(%f)\n",k);
-
-//         fprintf(stderr,"k^2=(%f)\n",(k*k));
-
-//         fprintf(stderr,"um?=(%f)\n",((B * B) - ((4 * A) * C)));
-
          lambda1 = ((-B + sqrt((B * B) - ((4 * A) * C))) / (2 * A));
 
          lambda2 = ((-B - sqrt((B * B) - ((4 * A) * C))) / (2 * A));
-
-         fprintf(stderr,"lambda1=(%f)\n",lambda1);
-         fprintf(stderr,"lambda2=(%f)\n",lambda2);
-
-// + k and h maybe need to be removed
-
-//         fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
-
-       // norm2.px = ray->p.px + (lambda2 * ray->d.px);
-       //  norm2.py = ray->p.py + (lambda2 * ray->d.py);
-       //  invertDirection(&norm2);
-       //  normalize(&norm2);
-
-//         fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
 
          if (lambda1 > TOL && lambda1 < lambda2) {
 
             if (lambda1 < prevlambda) {
                p->px = ray->p.px + lambda2*ray->d.px;
                p->py = ray->p.py + lambda2*ray->d.py;
-               type = &objects[i].material_type;
+               *type = objects[i].material_type;
 
                norm1.px = (2 * (p->px - h));
                norm1.py = (2 * (p->py - k));
                invertDirection(&norm1);
                normalize(&norm1);
-
-               fprintf(stderr,"norm1=(%f,%f)\n",norm1.px,norm1.py);
-
 
                n->px = norm1.px;
                n->py = norm1.py;
@@ -538,26 +521,20 @@ void intersectRay(struct ray2D *ray, struct point2D *p, struct point2D *n, doubl
             if (lambda2 < prevlambda) {
                p->px = ray->p.px + lambda2*ray->d.px;
                p->py = ray->p.py + lambda2*ray->d.py;
-               type = &objects[i].material_type;
+               *type = objects[i].material_type;
 
                norm2.px = (2 * (p->px - h));
                norm2.py = (2 * (p->py - k));
                invertDirection(&norm2);
                normalize(&norm2);
 
-               fprintf(stderr,"norm2=(%f,%f)\n",norm2.px,norm2.py);
-
                n->px = norm2.px;
                n->py = norm2.py;
-//               lambda = &lambda2;
                *lambda = lambda2;
                r_idx = &objects[i].r_idx;
-
-               fprintf(stderr,"chosen lambda=(%f)\n",*lambda);
             }
 
          }
-
       }
    }   
 }

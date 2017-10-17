@@ -102,7 +102,7 @@ void buildScene(void)
 
  c.px=.5;
  c.py=-.5;
- addCirc(&c,.25,0,2.47);
+ addCirc(&c,.25,1,2.47);
 
  p.px=0.0;			// Set a light source at the origin, pointing in direction
  p.py=0.0;			// (1.0, -.8)  (remember that Y increases downward!)
