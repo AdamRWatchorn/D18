@@ -114,7 +114,7 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  //   **obj   -  A pointer toward an (object3D *) variable so you can return a pointer to the object that has the closest intersection with
  //              this ray (this is required so you can do the shading)
  //   *p      -  A pointer to a 3D point structure so you can store the coordinates of the intersection point
- //   *n      -  A pointer to a 3D point structure so you can return the normal at the intersection point
+ //   *n      -  A pointer to a 3D pointnewR structure so you can return the normal at the intersection point
  //   *a, *b  -  Pointers toward double variables so you can return the texture coordinates a,b at the intersection point
 
  /////////////////////////////////////////////////////////////
@@ -146,9 +146,9 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
 
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
-  col->R=-1;
-  col->G=-1;
-  col->B=-1;
+//  col->R=-1;
+// col->G=-1;
+//  col->B=-1;
   return;
  }
 
@@ -310,6 +310,32 @@ int main(int argc, char *argv[])
     // TO DO - complete the code that should be in this loop to do the
     //         raytracing!
     ///////////////////////////////////////////////////////////////////
+
+    // Set up (x,y) coordinates for pixel in camera coordinates
+    double pixel_x = (cam->wl + (i * du));
+    double pixel_y = (cam->wt + (j * dv));
+    int depth = 1;
+
+    // Create new points at the above coordinates
+    pc = newPoint(pixel_x, pixel_y, cam->f);
+    d = newPoint(pixel_x, pixel_y, cam->f);
+
+    // Convert camrea coordinates to world coordinates
+    matVecMult(cam->C2W, pc);
+    matVecMult(cam->C2W, d);
+
+    // Adds a translation to align point with its true location
+    addVectors(cam->e,pc);
+
+    // Create ray that leaves camera and intersects the plane at pc
+    ray = newRay(pc, d);
+
+    // Trace the ray
+    rayTrace(ray, depth, col, NULL);
+    
+//rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object3D *Os)
+//void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct object3D **obj, struct point3D *p, struct point3D *n, double *a, double *b)
+//void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct ray3D *ray, int depth, double a, double b, struct colourRGB *col)
 
   } // end for i
  } // end for j
