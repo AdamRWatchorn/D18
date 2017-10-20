@@ -95,6 +95,24 @@ inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, 
  ///////////////////////////////////////////
  // TO DO: Complete this function
  ///////////////////////////////////////////
+
+
+ ray_transformed->p0.px = ray_orig->p0.px;
+ ray_transformed->p0.py = ray_orig->p0.py;
+ ray_transformed->p0.pz = ray_orig->p0.pz;
+ ray_transformed->p0.pw = ray_orig->p0.pw;
+
+ ray_transformed->d.px = ray_orig->d.px;
+ ray_transformed->d.py = ray_orig->d.py;
+ ray_transformed->d.pz = ray_orig->d.pz;
+ ray_transformed->d.pw = 0;
+
+ matVecMult(obj->Tinv, &(ray_transformed->p0));
+
+ matVecMult(obj->Tinv, &(ray_transformed->d));
+
+  ray_transformed->d.pw = 1;
+
 }
 
 inline void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, struct object3D *obj)
@@ -244,6 +262,61 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////
+
+ // p is the intersection point, n is the normal
+
+ struct ray3D *ray_t;
+ struct point3D *on_plane;
+ double dot_prod_top, dot_prod_bot;
+
+ // pw is zero as this is a normalized vector
+ n->px = 0;
+ n->py = 0;
+ n->pz = 1;
+ n->pw = 0;
+
+ on_plane->px = 0;
+ on_plane->py = 0;
+ on_plane->pz = 0;
+ on_plane->pw = 1;
+
+ rayTransform(ray, ray_t, plane);
+
+//inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, struct object3D *obj)
+
+// matVecMult(plane->T, on_plane);
+
+/*
+ matVecMult(plane->Tinv, &(ray->p0));
+
+ ray->d.pw = 0;
+
+ matVecMult(plane->Tinv, &(ray->d));
+*/
+
+ on_plane->pw = 2;
+
+
+ subVectors(&(ray_t->p0), on_plane);
+
+
+ dot_prod_top = dot(on_plane, n);
+ dot_prod_bot = dot(&(ray_t->d), n);
+
+ *lambda = (dot_prod_top / dot_prod_bot);
+
+// matVecMult(plane->T, &(ray->p0));
+// ray->d.pw = 0;
+// matVecMult(plane->T, &(ray->d));
+
+ p->px = *lambda * ray->d.px;
+ p->py = *lambda * ray->d.py;
+ p->pz = *lambda * ray->d.pz;
+
+ addVectors(&(ray->p0), p);
+
+ // add normal stuff
+
 }
 
 void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda, struct point3D *p, struct point3D *n, double *a, double *b)

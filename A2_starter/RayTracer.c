@@ -97,6 +97,11 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  //////////////////////////////////////////////////////////////
 
  // Be sure to update 'col' with the final colour computed here!
+
+ col->R = R;
+ col->G = G;
+ col->B = B;
+
  return;
 
 }
@@ -122,6 +127,35 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  // reference of what to do in here
  /////////////////////////////////////////////////////////////
 
+    struct object3D *obj_search = object_list, *closest_obj = NULL;
+    struct point3D *closest_p = NULL, *closest_n = NULL;
+    double closestLambda = INFINITY;
+
+    // Search entire object list
+    while(obj_search != NULL) {
+
+        // Only perform operations if object isn't the source
+        if(&Os != &obj_search) {
+
+            // Check for intersections
+            obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
+
+            // if sets closest lambda value thus far
+            if(*lambda > 0 && *lambda < closestLambda) {
+                closestLambda = *lambda;
+                closest_obj = obj_search;
+                closest_p = p;
+                closest_n = n;
+            }
+        }
+        obj_search = obj_search->next;
+    }
+
+    lambda = &closestLambda;
+    obj_search = closest_obj;
+    p = closest_p;
+    n = closest_n;
+
 }
 
 void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object3D *Os)
@@ -144,8 +178,11 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct point3D n;	// Normal at intersection
  struct colourRGB I;	// Colour returned by shading function
 
+ struct object3D *obj_closest, *obj_search = object_list;
+
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
+
 //  col->R=-1;
 // col->G=-1;
 //  col->B=-1;
@@ -156,6 +193,15 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  // TO DO: Complete this function. Refer to the notes
  // if you are unsure what to do here.
  ///////////////////////////////////////////////////////
+
+//void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct object3D **obj, struct point3D *p, struct point3D *n, double *a, double *b)
+    findFirstHit(ray, &lambda, Os, &obj_search, &p, &n, &a, &b);
+
+  // does get lambda here
+  fprintf(stderr,"Lambda: %f\n", lambda);
+
+//void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct ray3D *ray, int depth, double a, double b, struct colourRGB *col)
+    rtShade(obj_search, &p, &n, ray, depth, a, b, col);
 }
 
 int main(int argc, char *argv[])
@@ -314,24 +360,24 @@ int main(int argc, char *argv[])
     // Set up (x,y) coordinates for pixel in camera coordinates
     double pixel_x = (cam->wl + (i * du));
     double pixel_y = (cam->wt + (j * dv));
-    int depth = 1;
+    int depth = 0;
 
     // Create new points at the above coordinates
-    pc = newPoint(pixel_x, pixel_y, cam->f);
-    d = newPoint(pixel_x, pixel_y, cam->f);
+    pc = *newPoint(pixel_x, pixel_y, cam->f);
+    d = *newPoint(pixel_x, pixel_y, cam->f);
 
-    // Convert camrea coordinates to world coordinates
-    matVecMult(cam->C2W, pc);
-    matVecMult(cam->C2W, d);
+    // Convert camera coordinates to world coordinates
+    matVecMult(cam->C2W, &pc);
+    matVecMult(cam->C2W, &d);
 
     // Adds a translation to align point with its true location
-    addVectors(cam->e,pc);
+    addVectors(&(cam->e),&pc);
 
     // Create ray that leaves camera and intersects the plane at pc
-    ray = newRay(pc, d);
+    ray = newRay(&pc, &d);
 
     // Trace the ray
-    rayTrace(ray, depth, col, NULL);
+    rayTrace(ray, depth, &col, NULL);
     
 //rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object3D *Os)
 //void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct object3D **obj, struct point3D *p, struct point3D *n, double *a, double *b)
