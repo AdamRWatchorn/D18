@@ -96,22 +96,13 @@ inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, 
  // TO DO: Complete this function
  ///////////////////////////////////////////
 
-
- ray_transformed->p0.px = ray_orig->p0.px;
- ray_transformed->p0.py = ray_orig->p0.py;
- ray_transformed->p0.pz = ray_orig->p0.pz;
- ray_transformed->p0.pw = ray_orig->p0.pw;
-
- ray_transformed->d.px = ray_orig->d.px;
- ray_transformed->d.py = ray_orig->d.py;
- ray_transformed->d.pz = ray_orig->d.pz;
  ray_transformed->d.pw = 0;
 
  matVecMult(obj->Tinv, &(ray_transformed->p0));
 
  matVecMult(obj->Tinv, &(ray_transformed->d));
 
-  ray_transformed->d.pw = 1;
+ ray_transformed->d.pw = 1;
 
 }
 
@@ -269,6 +260,8 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  struct point3D *on_plane;
  double dot_prod_top, dot_prod_bot;
 
+ ray_t = newRay(&(ray->p0), &(ray->d));
+
  // pw is zero as this is a normalized vector
  n->px = 0;
  n->py = 0;
@@ -281,6 +274,7 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  on_plane->pw = 1;
 
  rayTransform(ray, ray_t, plane);
+
 
 //inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, struct object3D *obj)
 
