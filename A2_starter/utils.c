@@ -115,6 +115,49 @@ inline void normalTransform(struct point3D *n_orig, struct point3D *n_transforme
  ///////////////////////////////////////////
  // TO DO: Complete this function
  ///////////////////////////////////////////
+
+//  fprintf(stderr,"Here\n");
+
+ n_transformed->px = n_orig->px;
+ n_transformed->px = n_orig->py;
+ n_transformed->px = n_orig->pz;
+ n_transformed->pw = 0;
+
+
+ double transpose[4][4];
+// memset(&tr[0][0],0,16*sizeof(double));
+
+//  fprintf(stderr,"Here\n");
+
+ transpose[0][0]=obj->Tinv[0][0];
+ transpose[1][1]=obj->Tinv[1][1];
+ transpose[2][2]=obj->Tinv[2][2];
+ transpose[3][3]=obj->Tinv[3][3];
+
+ transpose[0][1]=obj->Tinv[1][0];
+ transpose[1][0]=obj->Tinv[0][1];
+
+ transpose[0][2]=obj->Tinv[2][0];
+ transpose[2][0]=obj->Tinv[0][2];
+
+ transpose[0][3]=obj->Tinv[3][0];
+ transpose[3][0]=obj->Tinv[0][3];
+
+ transpose[1][2]=obj->Tinv[2][1];
+ transpose[2][1]=obj->Tinv[1][2];
+
+ transpose[1][3]=obj->Tinv[3][1];
+ transpose[3][1]=obj->Tinv[1][3];
+
+ transpose[2][3]=obj->Tinv[3][2];
+ transpose[3][2]=obj->Tinv[2][3];
+
+//  fprintf(stderr,"Here\n");
+
+ matVecMult(transpose, n_transformed);
+
+ n_transformed->pw = 1;
+
 }
 
 /////////////////////////////////////////////
@@ -257,59 +300,96 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  // p is the intersection point, n is the normal
 
  struct ray3D *ray_t;
- struct point3D *on_plane;
+ struct point3D *p1, *p12, *p2, *p3, *p4, *e1, *e2, *e3, *e4, *norm, *v, *pint;
  double dot_prod_top, dot_prod_bot;
+ int inside = 0;
 
  ray_t = newRay(&(ray->p0), &(ray->d));
 
- // pw is zero as this is a normalized vector
- n->px = 0;
- n->py = 0;
- n->pz = 1;
- n->pw = 0;
+ norm = newPoint(0.0, 0.0, 1.0);
 
- on_plane->px = 0;
- on_plane->py = 0;
- on_plane->pz = 0;
- on_plane->pw = 1;
+ p1 = newPoint(1.0, 1.0, 0.0);
+
+ p12 = newPoint(1.0, 1.0, 0.0);
+
+ p2 = newPoint(-1.0, 1.0, 0.0);
+
+ p3 = newPoint(-1.0, -1.0, 0.0);
+
+ p4 = newPoint(1.0, -1.0, 0.0);
+
+ e1 = newPoint(-2.0, 0.0, 0.0);
+
+ e2 = newPoint(0.0, -2.0, 0.0);
+
+ e3 = newPoint(2.0, 0.0, 0.0);
+
+ e4 = newPoint(0.0, 2.0, 0.0);
 
  rayTransform(ray, ray_t, plane);
 
+ subVectors(&(ray_t->p0), p1);
 
-//inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, struct object3D *obj)
-
-// matVecMult(plane->T, on_plane);
-
-/*
- matVecMult(plane->Tinv, &(ray->p0));
-
- ray->d.pw = 0;
-
- matVecMult(plane->Tinv, &(ray->d));
-*/
-
- on_plane->pw = 2;
-
-
- subVectors(&(ray_t->p0), on_plane);
-
-
- dot_prod_top = dot(on_plane, n);
- dot_prod_bot = dot(&(ray_t->d), n);
+ // Getting values for dot products preemptively
+ dot_prod_top = dot(p1, norm);
+ dot_prod_bot = dot(&(ray_t->d), norm);
 
  *lambda = (dot_prod_top / dot_prod_bot);
 
-// matVecMult(plane->T, &(ray->p0));
-// ray->d.pw = 0;
-// matVecMult(plane->T, &(ray->d));
+ rayPosition(ray, *lambda, p);
 
- p->px = *lambda * ray->d.px;
- p->py = *lambda * ray->d.py;
- p->pz = *lambda * ray->d.pz;
+ // Creating new point for intersection
+ v = newPoint(p->px, p->py, p->pz);
 
- addVectors(&(ray->p0), p);
+ rayPosition(ray_t, *lambda, v);
 
- // add normal stuff
+// fprintf(stderr,"px = %f, py = %f, pz = %f, pw = %f\n", v->px, v->py, v->pz, v->pw);
+
+ subVectors(p12, v);
+
+ // Set n to transformed normal
+ normalTransform(norm, n, plane);
+ normalize(n);
+
+ e1 = cross(e1, v);
+
+ if(dot(e1, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p2, v);
+
+ e2 = cross(e2, v);
+
+ if(dot(e2, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p3, v);
+
+ e3 = cross(e3, v);
+
+ if(dot(e3, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p4, v);
+
+ e4 = cross(e4, v);
+
+ if(dot(e4, norm) >= 0) {
+  inside += 1;
+ }
+
+ if(inside != 4) {
+  *lambda = -1;
+ }
+
+// free(ray_t);
+
 
 }
 
@@ -321,6 +401,57 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////
+
+ double A, B, C, D, lambda1, lambda2;
+ struct ray3D *ray_t;
+ struct point3D *pint, *norm;
+
+ // Creating a new point to help find normal
+ pint = newPoint(0.0, 0.0, 0.0);
+
+ // create a transformed ray to intersect with unit sphere
+ ray_t = newRay(&(ray->p0), &(ray->d));
+ rayTransform(ray, ray_t, sphere);
+
+ A = dot(&(ray_t->d), &(ray_t->d));
+
+ B = dot(&(ray_t->p0), &(ray_t->d));
+
+ C = (dot(&(ray_t->p0), &(ray_t->p0)) - 1);
+
+ D = ((B * B) - (A * C));
+
+ // else covers the case of no intersections
+ if(D >= 0) {
+
+  lambda1 = ((-(B / A)) + (sqrt(D) / A));
+
+  lambda2 = ((-(B / A)) - (sqrt(D) / A));
+
+  if(lambda1 > 0 && lambda1 < lambda2) {
+   *lambda = lambda1;
+  }
+  else if(lambda2 > 0 && lambda2 < lambda1) {
+   *lambda = lambda2;
+  }
+  else if(lambda1 < 0 && lambda2 < 0) {
+   *lambda = -1;
+   return;
+  }
+
+  rayPosition(ray, *lambda, p);
+  rayPosition(ray_t, *lambda, pint);
+
+  norm = newPoint(2*pint->px, 2*pint->py, 2*pint->pz);
+  normalize(norm);
+
+  normalTransform(norm, n, sphere);
+  normalize(n);
+
+ } else {
+  *lambda = -1;
+ }
+
 }
 
 void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, struct point3D *p, struct point3D *n, double *a, double *b)
