@@ -80,7 +80,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  if (obj->texImg==NULL)		// Not textured, use object colour
  {
-  fprintf(stderr,"color\n");
+//  fprintf(stderr,"color\n");
   R=obj->col.R;
   G=obj->col.G;
   B=obj->col.B;
@@ -412,8 +412,12 @@ int main(int argc, char *argv[])
     matVecMult(cam->C2W, &pc);
     matVecMult(cam->C2W, &d);
 
+    subVectors(&(cam->e),&d);
+
+    normalize(&d);
+
     // Adds a translation to align point with its true location
-    addVectors(&(cam->e),&pc);
+//    addVectors(&(cam->e),&pc);
 
     // Create ray that leaves camera and intersects the plane at pc
     ray = newRay(&pc, &d);

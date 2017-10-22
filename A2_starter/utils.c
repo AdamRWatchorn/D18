@@ -104,6 +104,8 @@ inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, 
 
  ray_transformed->d.pw = 1;
 
+ normalize(&(ray_transformed->d));
+
 }
 
 inline void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, struct object3D *obj)
@@ -116,18 +118,13 @@ inline void normalTransform(struct point3D *n_orig, struct point3D *n_transforme
  // TO DO: Complete this function
  ///////////////////////////////////////////
 
-//  fprintf(stderr,"Here\n");
-
  n_transformed->px = n_orig->px;
- n_transformed->px = n_orig->py;
- n_transformed->px = n_orig->pz;
+ n_transformed->py = n_orig->py;
+ n_transformed->pz = n_orig->pz;
  n_transformed->pw = 0;
 
 
  double transpose[4][4];
-// memset(&tr[0][0],0,16*sizeof(double));
-
-//  fprintf(stderr,"Here\n");
 
  transpose[0][0]=obj->Tinv[0][0];
  transpose[1][1]=obj->Tinv[1][1];
@@ -300,7 +297,7 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  // p is the intersection point, n is the normal
 
  struct ray3D *ray_t;
- struct point3D *p1, *p12, *p2, *p3, *p4, *e1, *e2, *e3, *e4, *norm, *v, *pint;
+ struct point3D *p1, *p12, *p2, *p3, *p4, *e1, *e2, *e3, *e4, *norm, *v;
  double dot_prod_top, dot_prod_bot;
  int inside = 0;
 
@@ -343,8 +340,6 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  rayPosition(ray_t, *lambda, v);
 
-// fprintf(stderr,"px = %f, py = %f, pz = %f, pw = %f\n", v->px, v->py, v->pz, v->pw);
-
  subVectors(p12, v);
 
  // Set n to transformed normal
@@ -386,7 +381,7 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  if(inside != 4) {
   *lambda = -1;
- }
+ } 
 
 // free(ray_t);
 
@@ -415,7 +410,7 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
 
  A = dot(&(ray_t->d), &(ray_t->d));
 
- B = dot(&(ray_t->p0), &(ray_t->d));
+ B = (dot(&(ray_t->p0), &(ray_t->d)));
 
  C = (dot(&(ray_t->p0), &(ray_t->p0)) - 1);
 
@@ -424,15 +419,25 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
  // else covers the case of no intersections
  if(D >= 0) {
 
+
   lambda1 = ((-(B / A)) + (sqrt(D) / A));
 
   lambda2 = ((-(B / A)) - (sqrt(D) / A));
 
-  if(lambda1 > 0 && lambda1 < lambda2) {
-   *lambda = lambda1;
+  if(lambda1 > 0 && lambda2 > 0) {
+
+   if(lambda1 < lambda2) {
+    *lambda = lambda1;
+   }
+   else if(lambda2 < lambda1) {
+    *lambda = lambda2;
+   }
   }
-  else if(lambda2 > 0 && lambda2 < lambda1) {
-   *lambda = lambda2;
+  else if(lambda1 > 0 && lambda2 < 0) {
+    *lambda = lambda1;
+  }
+  else if(lambda2 > 0 && lambda1 < 0) {
+    *lambda = lambda2;
   }
   else if(lambda1 < 0 && lambda2 < 0) {
    *lambda = -1;
