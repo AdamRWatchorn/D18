@@ -104,7 +104,11 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct ray3D *ray_sh;
  struct colourRGB col_sh;
 
- s = newPoint(p->px, p->py, p->pz);
+/*    ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
+    subVectors(&p, ds);
+    ray_sh = newRay(&p, ds);*/
+
+ s = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
  ds = newPoint(p->px, p->py, p->pz);
  c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
 
@@ -120,7 +124,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  G = obj->alb.ra*obj->col.G;
  B = obj->alb.ra*obj->col.B;
 
- subVectors(&(light_source->p0), s);
+ subVectors(p, s);
 
  // Need to normalize s below as it is operated on above
  normalize(s);
@@ -189,8 +193,11 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  /////////////////////////////////////////////////////////////
 
     struct object3D *obj_search = object_list, *closest_obj = NULL;
-    struct point3D *closest_p = NULL, *closest_n = NULL;
+    struct point3D *closest_p, *closest_n;
     double closestLambda = INFINITY;
+
+    closest_p = newPoint(0.0,  0.0, 0.0);
+    closest_n = newPoint(0.0, 0.0, 0.0);
 
     // Search entire object list
     while(obj_search != NULL) {
@@ -205,17 +212,54 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
             if((*lambda > 0.0) && (*lambda < closestLambda)) {
                 closestLambda = *lambda;
                 closest_obj = obj_search;
-                closest_p = p;
-                closest_n = n;
+//                closest_p = p;
+                closest_p->px = p->px;
+                closest_p->py = p->py;
+                closest_p->pz = p->pz;
+
+//                closest_n = n;
+                closest_n->px = n->px;
+                closest_n->py = n->py;
+                closest_n->pz = n->pz;
+
             }
         }
+        else if(length(&(ray->d)) != 1) {
+
+            // Check for intersections
+            obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
+
+            // if sets closest lambda value thus far
+            if((*lambda > 0.0) && (*lambda < closestLambda)) {
+                closestLambda = *lambda;
+                closest_obj = obj_search;
+//                closest_p = p;
+                closest_p->px = p->px;
+                closest_p->py = p->py;
+                closest_p->pz = p->pz;
+
+//                closest_n = n;
+                closest_n->px = n->px;
+                closest_n->py = n->py;
+                closest_n->pz = n->pz;
+
+            }
+        }
+
         obj_search = obj_search->next;
     }
 
     lambda = &closestLambda;
     *obj = closest_obj;
-    p = closest_p;
-    n = closest_n;
+//    p = closest_p;
+    p->px = closest_p->px;
+    p->py = closest_p->py;
+    p->pz = closest_p->pz;
+
+//    n = closest_n;
+    n->px = closest_n->px;
+    n->py = closest_n->py;
+    n->pz = closest_n->pz;
 
 }
 
@@ -239,6 +283,16 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct point3D n;	// Normal at intersection
  struct colourRGB I;	// Colour returned by shading function
 
+ struct ray3D *ray_sh;
+ double lambda_sh;
+ double a_sh,b_sh;
+ struct object3D *obj_sh;
+ struct point3D p_sh;
+ struct point3D n_sh;
+ struct colourRGB I_sh;
+ struct point3D *ds;
+ struct pointLS *light_source = light_list;
+
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
 
@@ -253,16 +307,44 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  // if you are unsure what to do here.
  ///////////////////////////////////////////////////////
 
+    // Finds closest intersection
     findFirstHit(ray, &lambda, Os, &obj, &p, &n, &a, &b);
 
+    // If there is no intersection, set pixel colour to that of the background
     if(obj == NULL) {
         col->R = 0;
         col->G = 0;
         col->B = 0;
         return;
     } else {
+        // Shade component primarily focused on ambient, diffuse, and specular
         rtShade(obj, &p, &n, ray, depth, a, b, col);
     }
+
+
+//    ds = newPoint(p.px, p.py, p.pz);
+//    subVectors(&(light_source->p0), ds);
+
+/*    ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
+    subVectors(&p, ds);
+    ray_sh = newRay(&p, ds);
+
+    // maybe obj should instead be NULL
+    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
+
+    if(obj_sh != NULL) {
+        if(lambda_sh < 1) {
+            col->R = obj->alb.ra*obj->col.R;
+            col->G = obj->alb.ra*obj->col.G;
+            col->B = obj->alb.ra*obj->col.B;
+        }
+    }*/
+
+//    col->R = (n.px + 1)/2;
+//    col->G = (n.py + 1)/2;
+//    col->B = (n.pz + 1)/2;
+
+
 
 //                fprintf(stderr,"here\n");
 

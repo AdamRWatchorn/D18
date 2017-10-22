@@ -149,8 +149,6 @@ inline void normalTransform(struct point3D *n_orig, struct point3D *n_transforme
  transpose[2][3]=obj->Tinv[3][2];
  transpose[3][2]=obj->Tinv[2][3];
 
-//  fprintf(stderr,"Here\n");
-
  matVecMult(transpose, n_transformed);
 
  n_transformed->pw = 1;
@@ -383,6 +381,9 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
   *lambda = -1;
  } 
 
+// n->px = -n->px;
+// n->py = -n->py;
+// n->pz = -n->pz;
 // free(ray_t);
 
 
@@ -447,15 +448,15 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   rayPosition(ray, *lambda, p);
   rayPosition(ray_t, *lambda, pint);
 
-  norm = newPoint(2*pint->px, 2*pint->py, 2*pint->pz);
+  norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
   normalize(norm);
 
   normalTransform(norm, n, sphere);
   normalize(n);
 
- n->px = -n->px;
- n->py = -n->py;
- n->pz = -n->pz;
+//  n->px = -n->px;
+//  n->py = -n->py;
+//  n->pz = -n->pz;
 
 
  } else {
