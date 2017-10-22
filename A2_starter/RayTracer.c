@@ -97,10 +97,10 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  //////////////////////////////////////////////////////////////
 
  struct pointLS *light_source = light_list;
- struct point3D *s, *c, *ds, *p_sh, *n_sh;
+ struct point3D *s, *c, *m, *ds, *p_sh, *n_sh, *n_b;
  struct object3D *obj_sh;
- double *lambda_sh, *a_sh, *b_sh;
- int shadowDepth = MAX_DEPTH - 1;
+ double *lambda_sh, *a_sh, *b_sh, spec, max_spec, m_a = 1.0;
+ int shadowDepth = MAX_DEPTH - 1, i;
  struct ray3D *ray_sh;
  struct colourRGB col_sh;
 
@@ -111,6 +111,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  s = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
  ds = newPoint(p->px, p->py, p->pz);
  c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
+ n_b = newPoint(-n->px, -n->py, -n->pz);
 
  c->px = -c->px;
  c->py = -c->py;
@@ -120,18 +121,35 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  // Be sure to update 'col' with the final colour computed here!
 
- R = obj->alb.ra*obj->col.R;
- G = obj->alb.ra*obj->col.G;
- B = obj->alb.ra*obj->col.B;
+ tmp_col.R += obj->alb.ra*R;
+ tmp_col.G += obj->alb.ra*G;
+ tmp_col.B += obj->alb.ra*B;
+// R = obj->alb.ra*obj->col.R;
+// G = obj->alb.ra*obj->col.G;
+// B = obj->alb.ra*obj->col.B;
 
  subVectors(p, s);
 
  // Need to normalize s below as it is operated on above
  normalize(s);
 
- R += obj->alb.rd * obj->col.R * light_source->col.R * max(0,dot(n,s));
- G += obj->alb.rd * obj->col.G * light_source->col.G * max(0,dot(n,s));
- B += obj->alb.rd * obj->col.B * light_source->col.B * max(0,dot(n,s));
+ if(obj->frontAndBack == 1) {
+//  R += obj->alb.rd * obj->col.R * light_source->col.R * max(0,dot(n_b,s));
+//  G += obj->alb.rd * obj->col.G * light_source->col.G * max(0,dot(n_b,s));
+//  B += obj->alb.rd * obj->col.B * light_source->col.B * max(0,dot(n_b,s));
+
+  tmp_col.R += obj->alb.rd * R * light_source->col.R * max(0,dot(n_b,s));
+  tmp_col.G += obj->alb.rd * G * light_source->col.G * max(0,dot(n_b,s));
+  tmp_col.B += obj->alb.rd * B * light_source->col.B * max(0,dot(n_b,s));
+ } else {
+//  R += obj->alb.rd * obj->col.R * light_source->col.R * max(0,dot(n,s));
+//  G += obj->alb.rd * obj->col.G * light_source->col.G * max(0,dot(n,s));
+//  B += obj->alb.rd * obj->col.B * light_source->col.B * max(0,dot(n,s));
+
+  tmp_col.R += obj->alb.rd * R * light_source->col.R * max(0,dot(n,s));
+  tmp_col.G += obj->alb.rd * G * light_source->col.G * max(0,dot(n,s));
+  tmp_col.B += obj->alb.rd * B * light_source->col.B * max(0,dot(n,s));
+ }
 
 // void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object3D *Os)
 
@@ -148,24 +166,53 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
   B = 0;
  }*/
 
+ spec = (2 * dot(s, n));
+ m = newPoint(spec * n->px, spec * n->py, spec * n->pz);
+ subVectors(s, m);
+ normalize(m);
+
+ max_spec = max(0,dot(m,c));
+
+ for(i = 0; i < obj->shinyness; i++) {
+  m_a = m_a * max_spec;
+ }
+
 // R+=obj->alb.rs * obj->col.R * lightsource->col.R * max(0,dot(m,c))^alpha
 
+// R+=obj->alb.rs * obj->col.R * light_source->col.R * m_a;
+// G+=obj->alb.rs * obj->col.G * light_source->col.G * m_a;
+// B+=obj->alb.rs * obj->col.B * light_source->col.B * m_a;
+
+
+// tmp_col.R += obj->alb.rs * R * light_source->col.R * m_a;
+// tmp_col.G += obj->alb.rs * G * light_source->col.G * m_a;
+// tmp_col.B += obj->alb.rs * B * light_source->col.B * m_a;
+
+ // Below is for testing specular
+ tmp_col.R += obj->alb.rs * m_a;
+ tmp_col.G += obj->alb.rs * m_a;
+ tmp_col.B += obj->alb.rs * m_a;
+
  
- if(R > 1) {
-  R = 1;
+ if(tmp_col.R > 1) {
+  tmp_col.R = 1;
  }
 
- if(G > 1) {
-  G = 1;
+ if(tmp_col.G > 1) {
+  tmp_col.G = 1;
  }
 
- if(B > 1) {
-  B = 1;
+ if(tmp_col.B > 1) {
+  tmp_col.B = 1;
  }
 
- col->R = R;
- col->G = G;
- col->B = B;
+// col->R = R;
+// col->G = G;
+// col->B = B;
+
+ col->R = tmp_col.R;
+ col->G = tmp_col.G;
+ col->B = tmp_col.B;
 
  return;
 
@@ -199,11 +246,11 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
     closest_p = newPoint(0.0,  0.0, 0.0);
     closest_n = newPoint(0.0, 0.0, 0.0);
 
-    // Search entire object list
+    // Search entire object list (just removed &s)
     while(obj_search != NULL) {
 
         // Only perform operations if object isn't the source
-        if(&Os != &obj_search) {
+        if(Os != obj_search) {
 
             // Check for intersections
             obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
@@ -224,7 +271,7 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
 
             }
         }
-        else if(length(&(ray->d)) != 1) {
+        /*else if(length(&(ray->d)) != 1) {
 
             // Check for intersections
             obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
@@ -244,7 +291,7 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
                 closest_n->pz = n->pz;
 
             }
-        }
+        }*/
 
         obj_search = obj_search->next;
     }
@@ -289,9 +336,10 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct object3D *obj_sh;
  struct point3D p_sh;
  struct point3D n_sh;
- struct colourRGB I_sh;
+ struct colourRGB *I_sh;
  struct point3D *ds;
  struct pointLS *light_source = light_list;
+ int depth_sh = MAX_DEPTH - 1;
 
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
@@ -306,6 +354,8 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  // TO DO: Complete this function. Refer to the notes
  // if you are unsure what to do here.
  ///////////////////////////////////////////////////////
+
+     depth += 1;
 
     // Finds closest intersection
     findFirstHit(ray, &lambda, Os, &obj, &p, &n, &a, &b);
@@ -325,15 +375,18 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
 //    ds = newPoint(p.px, p.py, p.pz);
 //    subVectors(&(light_source->p0), ds);
 
-/*    ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
+    ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
     subVectors(&p, ds);
     ray_sh = newRay(&p, ds);
 
     // maybe obj should instead be NULL
-    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
+/*    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
+//    rayTrace(ray_sh, depth_sh, I_sh, obj);
+    
 
     if(obj_sh != NULL) {
-        if(lambda_sh < 1) {
+        if(lambda_sh < 1 && lambda_sh > 0) {
+                fprintf(stderr,"here\n");
             col->R = obj->alb.ra*obj->col.R;
             col->G = obj->alb.ra*obj->col.G;
             col->B = obj->alb.ra*obj->col.B;
