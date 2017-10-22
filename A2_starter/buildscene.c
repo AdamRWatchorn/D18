@@ -33,7 +33,9 @@
 
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
 
- o=newSphere(.05,.95,.35,.35,1,.25,.25,1,1,6);		// Initialize a sphere
+// o=newSphere(.05,.95,.35,.35,1,.25,.25,1,1,6);		// Initialize a sphere
+// o=newSphere(1,0,0,0,1,.25,.25,1,1,6);
+ o=newSphere(.1,.95,0,0,1,.25,.25,1,1,6);
  Scale(o,1.5,.75,.75);					// Apply a few transforms (Translate * Rotate * Scale)
  RotateZ(o,PI/4);					
  Translate(o,2.0,2.5,1.5);
@@ -56,14 +58,18 @@
 						//     nothing happens! your object won't be rendered.
 
  // That's it for defining a single sphere... let's add a couple more objects
- o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
+// o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
+// o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);
+ o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);
  Scale(o,.95,1.65,.65);
  RotateZ(o,-PI/1.5);
  Translate(o,-2.2,1.75,1.35);
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
 
- o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
+// o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
+// o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);
+ o=newPlane(.1,.75,0,0,.55,.8,.75,1,1,2);
  Scale(o,11,11,11);
  RotateZ(o,PI/4);
  RotateX(o,PI/2);
