@@ -112,7 +112,6 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  c->py = -c->py;
  c->pz = -c->pz;
 
-// normalize(s);
  normalize(c); 
 
  // Be sure to update 'col' with the final colour computed here!
@@ -123,6 +122,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  subVectors(&(light_source->p0), s);
 
+ // Need to normalize s below as it is operated on above
  normalize(s);
 
  R += obj->alb.rd * obj->col.R * light_source->col.R * max(0,dot(n,s));

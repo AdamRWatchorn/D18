@@ -453,6 +453,11 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   normalTransform(norm, n, sphere);
   normalize(n);
 
+ n->px = -n->px;
+ n->py = -n->py;
+ n->pz = -n->pz;
+
+
  } else {
   *lambda = -1;
  }
