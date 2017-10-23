@@ -272,6 +272,39 @@ struct object3D *newCyl(double ra, double rd, double rs, double rg, double r, do
  // TO DO:
  //	Complete the code to create and initialize a new cylinder object.
  ///////////////////////////////////////////////////////////////////////////////////////  
+
+ struct object3D *cylinder=(struct object3D *)calloc(1,sizeof(struct object3D));
+
+ if (!cylinder) fprintf(stderr,"Unable to allocate new cylinder, out of memory!\n");
+ else
+ {
+  cylinder->alb.ra=ra;
+  cylinder->alb.rd=rd;
+  cylinder->alb.rs=rs;
+  cylinder->alb.rg=rg;
+  cylinder->col.R=r;
+  cylinder->col.G=g;
+  cylinder->col.B=b;
+  cylinder->alpha=alpha;
+  cylinder->r_index=R_index;
+  cylinder->shinyness=shiny;
+  cylinder->intersect=&cylIntersect;
+  cylinder->surfaceCoords=&cylCoordinates;
+  cylinder->randomPoint=&cylSample;
+  cylinder->texImg=NULL;
+  cylinder->photonMap=NULL;
+  cylinder->normalMap=NULL;
+  memcpy(&cylinder->T[0][0],&eye4x4[0][0],16*sizeof(double));
+  memcpy(&cylinder->Tinv[0][0],&eye4x4[0][0],16*sizeof(double));
+  cylinder->textureMap=&texMap;
+  cylinder->frontAndBack=0;
+  cylinder->photonMapped=0;
+  cylinder->normalMapped=0;
+  cylinder->isCSG=0;
+  cylinder->isLightSource=0;
+  cylinder->CSGnext=NULL;
+  cylinder->next=NULL; }
+ return(cylinder);
 }
 
 
