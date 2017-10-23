@@ -271,32 +271,11 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
 
             }
         }
-        /*else if(length(&(ray->d)) != 1) {
-
-            // Check for intersections
-            obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
-
-            // if sets closest lambda value thus far
-            if((*lambda > 0.0) && (*lambda < closestLambda)) {
-                closestLambda = *lambda;
-                closest_obj = obj_search;
-//                closest_p = p;
-                closest_p->px = p->px;
-                closest_p->py = p->py;
-                closest_p->pz = p->pz;
-
-//                closest_n = n;
-                closest_n->px = n->px;
-                closest_n->py = n->py;
-                closest_n->pz = n->pz;
-
-            }
-        }*/
 
         obj_search = obj_search->next;
     }
 
-    lambda = &closestLambda;
+    *lambda = closestLambda;
     *obj = closest_obj;
 //    p = closest_p;
     p->px = closest_p->px;
@@ -339,7 +318,7 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct colourRGB *I_sh;
  struct point3D *ds;
  struct pointLS *light_source = light_list;
- int depth_sh = MAX_DEPTH - 1;
+ int depth_sh = MAX_DEPTH;
 
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
@@ -371,32 +350,31 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
         rtShade(obj, &p, &n, ray, depth, a, b, col);
     }
 
-
-//    ds = newPoint(p.px, p.py, p.pz);
-//    subVectors(&(light_source->p0), ds);
-
+    // Builds a ray pointed in the direction of the light source
     ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
     subVectors(&p, ds);
     ray_sh = newRay(&p, ds);
 
-    // maybe obj should instead be NULL
-/*    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
-//    rayTrace(ray_sh, depth_sh, I_sh, obj);
+
+    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
     
 
+    // checks if there is an intersection in the shadow direction
     if(obj_sh != NULL) {
+        // checks if the intersection is before the light source
         if(lambda_sh < 1 && lambda_sh > 0) {
-                fprintf(stderr,"here\n");
             col->R = obj->alb.ra*obj->col.R;
             col->G = obj->alb.ra*obj->col.G;
             col->B = obj->alb.ra*obj->col.B;
         }
-    }*/
+    }
 
-//    col->R = (n.px + 1)/2;
-//    col->G = (n.py + 1)/2;
-//    col->B = (n.pz + 1)/2;
+    // Below code checks for correct transformed normal direction vectors
+    // col->R = (n.px + 1)/2;
+    // col->G = (n.py + 1)/2;
+    // col->B = (n.pz + 1)/2;
 
+    
 
 
 //                fprintf(stderr,"here\n");
@@ -571,7 +549,6 @@ int main(int argc, char *argv[])
 
     // Translates d to align point with its true location
     subVectors(&(cam->e),&d);
-    normalize(&d);
 
     // Create ray that leaves camera and intersects the plane at pc
     ray = newRay(&pc, &d);

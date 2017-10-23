@@ -104,8 +104,6 @@ inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, 
 
  ray_transformed->d.pw = 1;
 
- normalize(&(ray_transformed->d));
-
 }
 
 inline void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, struct object3D *obj)
