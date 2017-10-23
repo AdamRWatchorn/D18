@@ -294,6 +294,7 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  struct ray3D *ray_t;
  struct point3D *p1, *p12, *p2, *p3, *p4, *e1, *e2, *e3, *e4, *norm, *v;
+ struct point3D *c1, *c2, *c3, *c4;
  double dot_prod_top, dot_prod_bot;
  int inside = 0;
 
@@ -342,36 +343,36 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  normalTransform(norm, n, plane);
  normalize(n);
 
- e1 = cross(e1, v);
+ c1 = cross(e1, v);
 
- if(dot(e1, norm) >= 0) {
+ if(dot(c1, norm) >= 0) {
   inside += 1;
  }
 
  rayPosition(ray_t, *lambda, v);
  subVectors(p2, v);
 
- e2 = cross(e2, v);
+ c2 = cross(e2, v);
 
- if(dot(e2, norm) >= 0) {
+ if(dot(c2, norm) >= 0) {
   inside += 1;
  }
 
  rayPosition(ray_t, *lambda, v);
  subVectors(p3, v);
 
- e3 = cross(e3, v);
+ c3 = cross(e3, v);
 
- if(dot(e3, norm) >= 0) {
+ if(dot(c3, norm) >= 0) {
   inside += 1;
  }
 
  rayPosition(ray_t, *lambda, v);
  subVectors(p4, v);
 
- e4 = cross(e4, v);
+ c4 = cross(e4, v);
 
- if(dot(e4, norm) >= 0) {
+ if(dot(c4, norm) >= 0) {
   inside += 1;
  }
 
@@ -379,10 +380,22 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
   *lambda = -1;
  } 
 
-// n->px = -n->px;
-// n->py = -n->py;
-// n->pz = -n->pz;
-// free(ray_t);
+ free(ray_t);
+ free(norm);
+ free(p1);
+ free(p12);
+ free(p2);
+ free(p3);
+ free(p4);
+ free(e1);
+ free(e2);
+ free(e3);
+ free(e4);
+ free(v);
+ free(c1);
+ free(c2);
+ free(c3);
+ free(c4);
 
 
 }
@@ -440,6 +453,10 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   }
   else if(lambda1 < 0 && lambda2 < 0) {
    *lambda = -1;
+
+   free(ray_t);
+   free(pint);
+
    return;
   }
 
@@ -452,10 +469,9 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   normalTransform(norm, n, sphere);
   normalize(n);
 
-//  n->px = -n->px;
-//  n->py = -n->py;
-//  n->pz = -n->pz;
-
+  free(ray_t);
+  free(pint);
+  free(norm);
 
  } else {
   *lambda = -1;
