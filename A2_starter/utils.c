@@ -17,18 +17,18 @@
 /*****************************************************************************
 * COMPLETE THIS TEXT BOX:
 *
-* 1) Student Name:		
-* 2) Student Name:		
+* 1) Student Name:	Adam Watchorn
+* 2) Student Name:	N/A	
 *
-* 1) Student number:
-* 2) Student number:
+* 1) Student number:    1000867788
+* 2) Student number:    N/A
 * 
-* 1) UtorID
-* 2) UtorID
+* 1) UtorID             watchor3
+* 2) UtorID             N/A
 * 
 * We hereby certify that the work contained here is our own
 *
-* ____________________             _____________________
+* Adam Watchorn                    N/A
 * (sign with your name)            (sign with your name)
 ********************************************************************************/
 

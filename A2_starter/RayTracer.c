@@ -25,18 +25,18 @@
 /*****************************************************************************
 * COMPLETE THIS TEXT BOX:
 *
-* 1) Student Name:		
-* 2) Student Name:		
+* 1) Student Name:	Adam Watchorn
+* 2) Student Name:	N/A	
 *
-* 1) Student number:
-* 2) Student number:
+* 1) Student number:    1000867788
+* 2) Student number:    N/A
 * 
-* 1) UtorID
-* 2) UtorID
+* 1) UtorID             watchor3
+* 2) UtorID             N/A
 * 
 * We hereby certify that the work contained here is our own
 *
-* ____________________             _____________________
+* Adam Watchorn                    N/A
 * (sign with your name)            (sign with your name)
 ********************************************************************************/
 
@@ -116,6 +116,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  // Be sure to update 'col' with the final colour computed here!
 
+ // Updating ambient component of light
  tmp_col.R += obj->alb.ra*R;
  tmp_col.G += obj->alb.ra*G;
  tmp_col.B += obj->alb.ra*B;
@@ -125,6 +126,8 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  // Need to normalize s below as it is operated on above
  normalize(s);
 
+ // Below checks if both sides can be illuminated and
+ // Updates diffuse component of light
  if(obj->frontAndBack == 1) {
   tmp_col.R += obj->alb.rd * R * light_source->col.R * max(0,dot(n_b,s));
   tmp_col.G += obj->alb.rd * G * light_source->col.G * max(0,dot(n_b,s));
@@ -135,6 +138,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
   tmp_col.B += obj->alb.rd * B * light_source->col.B * max(0,dot(n,s));
  }
 
+ // Setup for calculating specular component of light
  spec = (2 * dot(s, n));
  m = newPoint(spec * n->px, spec * n->py, spec * n->pz);
  subVectors(s, m);
@@ -142,25 +146,28 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  max_spec = max(0,dot(m,c));
 
+ // Applies the correct exponent alpha
  for(i = 0; i < obj->shinyness; i++) {
   m_a = m_a * max_spec;
  }
 
 
-// tmp_col.R += obj->alb.rs * R * light_source->col.R * m_a;
-// tmp_col.G += obj->alb.rs * G * light_source->col.G * m_a;
-// tmp_col.B += obj->alb.rs * B * light_source->col.B * m_a;
+ tmp_col.R += obj->alb.rs * R * light_source->col.R * m_a;
+ tmp_col.G += obj->alb.rs * G * light_source->col.G * m_a;
+ tmp_col.B += obj->alb.rs * B * light_source->col.B * m_a;
 
  // Below is for testing specular
- tmp_col.R += obj->alb.rs * m_a;
- tmp_col.G += obj->alb.rs * m_a;
- tmp_col.B += obj->alb.rs * m_a;
+// tmp_col.R += obj->alb.rs * m_a;
+// tmp_col.G += obj->alb.rs * m_a;
+// tmp_col.B += obj->alb.rs * m_a;
 
 
+ // Make the returned color equal the calculated color
  col->R = tmp_col.R;
  col->G = tmp_col.G;
  col->B = tmp_col.B;
 
+ // Free up allocated memory
  free(s);
  free(c);
  free(n_b);
@@ -211,12 +218,11 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
             if((*lambda > 0.0) && (*lambda < closestLambda)) {
                 closestLambda = *lambda;
                 closest_obj = obj_search;
-//                closest_p = p;
+
                 closest_p->px = p->px;
                 closest_p->py = p->py;
                 closest_p->pz = p->pz;
 
-//                closest_n = n;
                 closest_n->px = n->px;
                 closest_n->py = n->py;
                 closest_n->pz = n->pz;
@@ -229,12 +235,11 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
 
     *lambda = closestLambda;
     *obj = closest_obj;
-//    p = closest_p;
+
     p->px = closest_p->px;
     p->py = closest_p->py;
     p->pz = closest_p->pz;
 
-//    n = closest_n;
     n->px = closest_n->px;
     n->py = closest_n->py;
     n->pz = closest_n->pz;
@@ -350,7 +355,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
 
     ray_dg = newRay(&p, dg);
 
-//void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object3D *Os)
     rayTrace(ray_dg, depth, &I, obj);
 
     col->R += obj->alb.rg * I.R;
@@ -567,10 +571,6 @@ int main(int argc, char *argv[])
   } // end for i
  } // end for j
 
-
-// free(&pc);
-// free(&d);
-// free(ray);
 
  fprintf(stderr,"\nDone!\n");
 
