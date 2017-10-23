@@ -87,8 +87,15 @@
  p.pz=-3.5;
  p.pw=1;
  l=newPLS(&p,.95,.95,.95);
-// l=newPLS(&p,1,1,1);
  insertPLS(l,&light_list);
+
+/* p.px=10;
+ p.py=25.5;
+ p.pz=-3.5;
+ p.pw=1;
+ l=newPLS(&p,.95,.95,.95);
+ insertPLS(l,&light_list);*/
+
 
  // End of simple scene for Assignment 2
  // Keep in mind that you can define new types of objects such as cylinders and parametric surfaces,
