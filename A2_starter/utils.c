@@ -520,6 +520,217 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////  
+
+ double A, B, C, D, lambda1, lambda2, interx, intery;
+ struct ray3D *ray_t, *ray_tp1;
+ struct point3D *pint, *norm, *bound, *p1, *p2, *pintp;
+ struct object3D *plane;
+
+ double dot_prod_top, dot_prod_bot;
+
+ // Creating a new point to help find normal
+ pint = newPoint(0.0, 0.0, 0.0);
+ pintp = newPoint(0.0, 0.0, 0.0);
+ bound = newPoint(0.0, 0.0, 0.0);
+ norm = newPoint(0.0, 0.0, 0.0);
+
+ // create a transformed ray to intersect with cylinder
+ ray_t = newRay(&(r->p0), &(r->d));
+ rayTransform(r, ray_t, cylinder);
+
+ ray_t->p0.pz = 0;
+ ray_t->d.pz = 0;
+
+ A = dot(&(ray_t->d), &(ray_t->d));
+
+ B = (dot(&(ray_t->p0), &(ray_t->d)));
+
+ C = (dot(&(ray_t->p0), &(ray_t->p0)) - 1);
+
+ D = ((B * B) - (A * C));
+
+ // else covers the case of no intersections
+ if(D >= 0) {
+
+
+  lambda1 = ((-(B / A)) + (sqrt(D) / A));
+
+  lambda2 = ((-(B / A)) - (sqrt(D) / A));
+
+  if(lambda1 > 0 && lambda2 > 0) {
+
+   if(lambda1 < lambda2) {
+    *lambda = lambda1;
+   }
+   else if(lambda2 < lambda1) {
+    *lambda = lambda2;
+   }
+  }
+  else if(lambda1 > 0 && lambda2 < 0) {
+    *lambda = lambda1;
+  }
+  else if(lambda2 > 0 && lambda1 < 0) {
+    *lambda = lambda2;
+  }
+  else if(lambda1 < 0 && lambda2 < 0) {
+   *lambda = -1;
+
+   free(ray_t);
+   free(pint);
+
+   return;
+  }
+
+  rayPosition(r, *lambda, p);
+  rayPosition(ray_t, *lambda, pint);
+
+//  norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
+  norm->px = 2 * pint->px;
+  norm->py = 2 * pint->py;
+  norm->pz = 2 * pint->pz;
+
+  normalize(norm);
+
+  normalTransform(norm, n, cylinder);
+  normalize(n);
+
+
+ } else {
+  *lambda = -1;
+ }
+
+ bound->px = p->px;
+ bound->py = p->py;
+ bound->pz = p->pz;
+
+ matVecMult(cylinder->Tinv, bound);
+
+ if(bound->pz > 1 || bound->pz < 0) {
+  *lambda = -1;
+ }
+
+ /*plane=newPlane(0,0,0,0,0,0,0,0,0,0);
+
+  plane->alb.ra=cylinder->alb.ra;
+  plane->alb.rd=cylinder->alb.rd;
+  plane->alb.rs=cylinder->alb.rs;
+  plane->alb.rg=cylinder->alb.rg;
+  plane->col.R=cylinder->col.R;
+  plane->col.G=cylinder->col.G;
+  plane->col.B=cylinder->col.B;
+  plane->alpha=cylinder->alpha;
+  plane->r_index=cylinder->r_index;
+  plane->shinyness=cylinder->shinyness;
+  plane->T = cylinder->T;
+  plane->Tinv = cylinder->Tinv;*/
+/*
+ // top cap intersection
+ rayTransform(r, ray_t, cylinder);
+// ray_t->p0.pz = 1;
+
+ p1 = newPoint(1, 0, 1);
+
+ norm->px = 0;
+ norm->py = 0;
+ norm->pz = 1;
+
+ subVectors(&(ray_t->p0), p1);
+
+ // Getting values for dot products preemptively
+ dot_prod_top = dot(p1, norm);
+ dot_prod_bot = dot(&(ray_t->d), norm);
+
+ lambda1 = (dot_prod_top / dot_prod_bot);
+
+ rayPosition(r, lambda1, pintp);
+
+ // Creating new point for intersection
+// v = newPoint(p->px, p->py, p->pz);
+ bound->px = pintp->px;
+ bound->py = pintp->py;
+ bound->pz = pintp->pz;
+
+// rayPosition(ray_t, lambda1, bound);
+
+ matVecMult(cylinder->Tinv, bound);
+
+ 
+
+ if(((bound->px*bound->px) + (bound->py*bound->py)) > 1.0) {
+  lambda1 = -1;
+ }
+
+ if(lambda1 > 0 && lambda1 < *lambda) {
+  *lambda = lambda1;
+
+  p->px = pintp->px;
+  p->py = pintp->py;
+  p->pz = pintp->pz;
+
+  normalTransform(norm, n, cylinder);
+  normalize(n);
+  
+ }*/
+
+ // bottom cap intersection
+ // create a transformed ray to intersect with cylinder
+/* ray_tp1 = newRay(&(r->p0), &(r->d));
+ rayTransform(r, ray_tp1, cylinder);
+// ray_t->p0.pz = 1;
+
+ p2 = newPoint(1, 0, 0);
+
+ norm->px = 0;
+ norm->py = 0;
+ norm->pz = -1;
+
+ subVectors(&(ray_tp1->p0), p2);
+
+ // Getting values for dot products preemptively
+ dot_prod_top = dot(p2, norm);
+ dot_prod_bot = dot(&(ray_tp1->d), norm);
+
+ lambda1 = (dot_prod_top / dot_prod_bot);
+
+ rayPosition(r, lambda1, pintp);
+
+ // Creating new point for intersection
+// v = newPoint(p->px, p->py, p->pz);
+// bound->px = pintp->px;
+// bound->py = pintp->py;
+// bound->pz = pintp->pz;
+
+ rayPosition(ray_tp1, lambda1, bound);
+
+// matVecMult(cylinder->Tinv, bound);
+
+ 
+
+ if(((bound->px*bound->px) + (bound->py*bound->py)) > 1.0) {
+  lambda1 = -1;
+ }
+
+ if(lambda1 > 0 && lambda1 < *lambda) {
+  *lambda = lambda1;
+
+  p->px = pintp->px;
+  p->py = pintp->py;
+  p->pz = pintp->pz;
+
+  normalTransform(norm, n, cylinder);
+  normalize(n);
+  
+ }*/
+
+ free(p1);
+ free(p2);
+ free(pintp);
+ free(norm);
+ free(bound);
+ free(pint);
+ free(ray_t);
+ free(ray_tp1);
+
 }
 
 /////////////////////////////////////////////////////////////////
