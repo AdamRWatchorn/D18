@@ -87,6 +87,7 @@
 // Scale(o,.95,1.65,.65);
 // RotateX(o,-PI/2);
 // RotateY(o,-PI/2);
+// RotateY(o,PI/2);
 // RotateY(o,-PI/4);
  Translate(o,0,0,2);
  invert(&o->T[0][0],&o->Tinv[0][0]);
