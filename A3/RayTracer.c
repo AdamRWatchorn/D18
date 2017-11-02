@@ -386,9 +386,9 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
 
 
      // Below code checks for correct transformed normal direction vectors
-     // col->R = (n.px + 1)/2;
-     // col->G = (n.py + 1)/2;
-     // col->B = (n.pz + 1)/2;
+      col->R = (n.px + 1)/2;
+      col->G = (n.py + 1)/2;
+      col->B = (n.pz + 1)/2;
 
     // Frees up allocated memory
     free(ds);
@@ -597,14 +597,13 @@ int main(int argc, char *argv[])
 
         pc.px = pix_x;
         pc.py = pix_y;
+
         // Randomly generates number between 0 and 0.99
         rand_num = (double)(rand() % 100) / 100;
-//        fprintf(stderr,"\nRandom: %f\n", rand_num);
 
         // Changes x coordinate randomly and independently
         if(rand_num > 0.50){
 
-//          pc.px = pix_x + (((rand_num - 0.5) * 7.828) * 0.01);
           pc.px = pix_x + ((rand_num - 0.5) * du);
         }
         else if(rand_num < 0.50){
@@ -617,11 +616,9 @@ int main(int argc, char *argv[])
         // Changes y coordinate randomly and independently
         if(rand_num > 0.50){
 
-//          pc.py = pix_y + (((rand_num - 0.5) * 7.828) * 0.01);
           pc.py = pix_y + ((rand_num - 0.5) * dv);
         }
         else if(rand_num < 0.50){
-//          pc.py = pix_y - ((rand_num * 7.828) * 0.01);
           pc.py = pix_y - (rand_num * dv);
         }
 
@@ -636,9 +633,6 @@ int main(int argc, char *argv[])
         col.B += aa_col.B;
 
      }
-
-//        fprintf(stderr,"\nPixel x: %f\n", pixel_x);
-//        fprintf(stderr,"\nPixel y: %f\n", pixel_y);
 
      col.R /= alias_ray_num + 1;
      col.G /= alias_ray_num + 1;

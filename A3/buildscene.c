@@ -84,12 +84,14 @@
 // o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
 // o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
 // o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
-// Scale(o,.95,1.65,.65);
-// RotateX(o,-PI/2);
+// Scale(o,0.5,0.5,0.5);
+ RotateX(o,-PI/2);
 // RotateY(o,-PI/2);
 // RotateY(o,PI/2);
+// RotateX(o,-PI/4);
 // RotateY(o,-PI/4);
- Translate(o,0,0,2);
+// Translate(o,0,0,2);
+ Translate(o,0,4,2);
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
 

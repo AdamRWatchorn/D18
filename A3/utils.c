@@ -521,10 +521,11 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
  // TO DO: Complete this function.
  /////////////////////////////////  
 
- double A, B, C, D, lambda1, lambda2, interx, intery;
+ double A, B, C, D, lambda1, lambda2, lambda_far, interx, intery;
  struct ray3D *ray_t, *ray_tp1;
  struct point3D *pint, *norm, *bound, *p1, *p2, *pintp;
- struct object3D *plane;
+
+ int flag_wall_close = 0, flag_base = 0, flag_top = 0, flag_wall_far = 0;
 
  double dot_prod_top, dot_prod_bot;
 
@@ -552,7 +553,6 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
  // else covers the case of no intersections
  if(D >= 0) {
 
-
   lambda1 = ((-(B / A)) + (sqrt(D) / A));
 
   lambda2 = ((-(B / A)) - (sqrt(D) / A));
@@ -561,9 +561,11 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
 
    if(lambda1 < lambda2) {
     *lambda = lambda1;
+    lambda_far = lambda2;
    }
    else if(lambda2 < lambda1) {
     *lambda = lambda2;
+    lambda_far = lambda1;
    }
   }
   else if(lambda1 > 0 && lambda2 < 0) {
@@ -581,10 +583,11 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
    return;
   }
 
+  rayTransform(r, ray_t, cylinder);
+
   rayPosition(r, *lambda, p);
   rayPosition(ray_t, *lambda, pint);
 
-//  norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
   norm->px = 2 * pint->px;
   norm->py = 2 * pint->py;
   norm->pz = 2 * pint->pz;
@@ -607,22 +610,40 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
 
  if(bound->pz > 1 || bound->pz < 0) {
   *lambda = -1;
+  flag_wall_close = 1;
  }
 
- /*plane=newPlane(0,0,0,0,0,0,0,0,0,0);
+ if(flag_wall_close) {
 
-  plane->alb.ra=cylinder->alb.ra;
-  plane->alb.rd=cylinder->alb.rd;
-  plane->alb.rs=cylinder->alb.rs;
-  plane->alb.rg=cylinder->alb.rg;
-  plane->col.R=cylinder->col.R;
-  plane->col.G=cylinder->col.G;
-  plane->col.B=cylinder->col.B;
-  plane->alpha=cylinder->alpha;
-  plane->r_index=cylinder->r_index;
-  plane->shinyness=cylinder->shinyness;
-  plane->T = cylinder->T;
-  plane->Tinv = cylinder->Tinv;*/
+//  rayTransform(r, ray_t, cylinder);
+
+  rayPosition(r, lambda_far, p);
+  rayPosition(ray_t, lambda_far, pint);
+
+  norm->px = 2 * pint->px;
+  norm->py = 2 * pint->py;
+  norm->pz = 2 * pint->pz;
+
+  normalize(norm);
+
+  normalTransform(norm, n, cylinder);
+  normalize(n);
+
+ bound->px = p->px;
+ bound->py = p->py;
+ bound->pz = p->pz;
+
+ matVecMult(cylinder->Tinv, bound);
+
+ *lambda = lambda_far;
+
+ if(bound->pz > 1 || bound->pz < 0) {
+  *lambda = -1;
+  flag_wall_far = 1;
+ }
+
+ }
+
 /*
  // top cap intersection
  rayTransform(r, ray_t, cylinder);
