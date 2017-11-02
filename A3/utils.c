@@ -577,6 +577,9 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
   else if(lambda1 < 0 && lambda2 < 0) {
    *lambda = -1;
 
+   flag_wall_close = 1;
+   flag_wall_far = 1;
+
    free(ray_t);
    free(pint);
 
