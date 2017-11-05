@@ -796,7 +796,7 @@ void cylCoordinates(struct object3D *cyl, double a, double b, double *x, double 
 void planeSample(struct object3D *plane, double *x, double *y, double *z)
 {
  // Returns the 3D coordinates (x,y,z) of a randomly sampled point on the plane
- // Sapling should be uniform, meaning there should be an equal change of gedtting
+ // Sampling should be uniform, meaning there should be an equal change of gedtting
  // any spot on the plane
 
  /////////////////////////////////
@@ -814,9 +814,12 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z)
  *z = 0;
 
  // Transform coordinates from canonical plane to affinely transformed plane
- matVecMult(plane->Tinv, x);
- matVecMult(plane->Tinv, y);
- matVecMult(plane->Tinv, z);
+ // Which will happen after this function is called in rtShade
+
+
+// matVecMult(plane->Tinv, x);
+// matVecMult(plane->Tinv, y);
+// matVecMult(plane->Tinv, z);
 
 }
 
@@ -1002,6 +1005,28 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
   //       light source's object surface within rtShade(). This is a bit more tricky
   //       but reduces artifacts significantly. If you do that, then there is no need
   //       to insert a series of point lightsources in this function.
+
+
+/*
+ struct object3D *plane;
+
+ // (ra,rd,rs,rg,r,g,b,alpha,r_index,shiny
+ plane = newPlane(1,0,0,0,r,g,b,1,1,1);
+
+ Scale(plane,sx,sy,1);
+
+ //Rotations
+
+ Translate(plane,tx,ty,tz);
+
+ invert(&plane->T[0][0],&plane->Tinv[0][0]);
+
+ plane->isLightSource = 1;
+
+ insertObject(plane, o_list);
+*/
+ 
+
 }
 
 ///////////////////////////////////

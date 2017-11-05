@@ -80,6 +80,31 @@
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
 
+
+/*
+void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
+                  double tx, double ty, double tz, int N,\
+                  double r, double g, double b, struct object3D **o_list, struct pointLS **l_list)
+*/
+
+
+ o = newPlane(1,0,0,0,1,1,1,1,1,1);
+
+ Scale(o,1,2,1);
+
+ //Rotations
+
+ Translate(o,0,1,10);
+
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ o->isLightSource = 1;
+
+ insertObject(o, &object_list);
+// addAreaLight(1.0,2.0,0.0,0.0,1.0,\
+              0.0,1.0,10.0,0,\
+              1.0,1.0,1.0,&object_list,&light_list);
+
 /*
  o=newCyl(.05,.95,.95,.75,.75,.95,.55,1,1,6);
 // o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
