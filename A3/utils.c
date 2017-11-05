@@ -807,8 +807,8 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z)
 // double rand_coord_x, rand_coord_y, coord_z = 0;
 
  // Randomly generates number between -0.99 and 0.99
- *x = ((double)(rand() % 200) / 100) - 1;
- *y = ((double)(rand() % 200) / 100) - 1;
+ *x = (((double)(rand() % 200) / 100) - 1);
+ *y = (((double)(rand() % 200) / 100) - 1);
 
  // z coordinate of canonical plane is always equal to zero
  *z = 0;

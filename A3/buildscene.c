@@ -91,11 +91,10 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
  Scale(o,1,2,1);
-
- //Rotations
-
- Translate(o,0,1,10);
-
+ RotateZ(o,PI/4);
+ RotateX(o,PI/2);
+ Translate(o,0,25.5,-3.5);
+// Translate(o,0,1,10);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  o->isLightSource = 1;
@@ -124,12 +123,14 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
 
  // Insert a single point light source. We set up its position as a point structure, and specify its
  // colour in terms of RGB (in [0,1]).
+/*
  p.px=0;
  p.py=25.5;
  p.pz=-3.5;
  p.pw=1;
  l=newPLS(&p,.95,.95,.95);
  insertPLS(l,&light_list);
+*/
 
 /* p.px=10;
  p.py=25.5;

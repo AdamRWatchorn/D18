@@ -72,6 +72,17 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct colourRGB tmp_col;	// Accumulator for colour components
  double R,G,B;			// Colour for the object in R G and B
 
+ // Variables for shadow
+ struct ray3D *ray_sh;
+ double lambda_sh;
+ double a_sh,b_sh;
+ struct object3D *obj_sh;
+ struct point3D p_sh;
+ struct point3D n_sh;
+ struct point3D *ds;
+ struct pointLS *light_source = light_list;
+
+
  // This will hold the colour as we process all the components of
  // the Phong illumination model
  tmp_col.R=0;
@@ -97,87 +108,173 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  //////////////////////////////////////////////////////////////
 
  // Variables for local light components
- struct pointLS *light_source = light_list;
+// struct pointLS *light_source = light_list;
+ struct object3D *ALS = object_list;
  struct point3D *s, *c, *m, *n_b;
- double spec, max_spec, m_a = 1.0;
- int i;
+ double spec, max_spec, m_a = 1.0, ratio;
+ int i, j, N = 10, k;
 
- while(light_source != NULL) {
+ double x, y, z;
 
-  // Set up variables for calculating multiple components below
-  s = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
-  c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
-  n_b = newPoint(-n->px, -n->py, -n->pz);
+ ds = newPoint(0,0,0);
 
-  c->px = -c->px;
-  c->py = -c->py;
-  c->pz = -c->pz;
+ // Set up variables for calculating multiple components below
+ c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
+ n_b = newPoint(-n->px, -n->py, -n->pz);
 
-  normalize(c); 
+ c->px = -c->px;
+ c->py = -c->py;
+ c->pz = -c->pz;
 
-  // Be sure to update 'col' with the final colour computed here!
+ normalize(c); 
 
-  // Updating ambient component of light
-  tmp_col.R += obj->alb.ra*R;
-  tmp_col.G += obj->alb.ra*G;
-  tmp_col.B += obj->alb.ra*B;
 
-  subVectors(p, s);
+// while(light_source != NULL) {
+ while(ALS != NULL) {
+  // If the object in the list is an area light source
+  if(ALS->isLightSource == 1) {
 
-  // Need to normalize s below as it is operated on above
-  normalize(s);
 
-  // Below checks if both sides can be illuminated and
-  // Updates diffuse component of light
-  if(obj->frontAndBack == 1) {
-   tmp_col.R += obj->alb.rd * R * light_source->col.R * max(0,dot(n_b,s));
-   tmp_col.G += obj->alb.rd * G * light_source->col.G * max(0,dot(n_b,s));
-   tmp_col.B += obj->alb.rd * B * light_source->col.B * max(0,dot(n_b,s));
-  } else {
-   tmp_col.R += obj->alb.rd * R * light_source->col.R * max(0,dot(n,s));
-   tmp_col.G += obj->alb.rd * G * light_source->col.G * max(0,dot(n,s));
-   tmp_col.B += obj->alb.rd * B * light_source->col.B * max(0,dot(n,s));
+   // Updating ambient component of light
+   tmp_col.R += obj->alb.ra*R;
+   tmp_col.G += obj->alb.ra*G;
+   tmp_col.B += obj->alb.ra*B;
+
+   k = 0;
+   for(j = 0; j < N; j++) {
+
+    // Random sample from object	
+    ALS->randomPoint(ALS, &x, &y, &z);
+
+    // Constructing canonical shadow ray point on ALS
+    ds->px = x;
+    ds->py = y;
+    ds->pz = z;
+
+    // Converting canonical point on ALS to world point
+    matVecMult(ALS->T, ds);
+
+    // Constructing shadow ray from intersection point to point on ALS
+    subVectors(p, ds);
+    ray_sh = newRay(p, ds);
+
+    // Checks if shadow ray intersects an object
+    findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
+
+
+     if(obj_sh != NULL) {
+         // checks if the intersection is before the light source
+      if(obj_sh->isLightSource) {
+
+       normalize(ds);
+
+       if(obj->frontAndBack == 1) {
+    //    tmp_col.R += ratio * obj->alb.rd * R * light_source->col.R * max(0,dot(n_b,s));
+    //    tmp_col.G += ratio * obj->alb.rd * G * light_source->col.G * max(0,dot(n_b,s));
+    //    tmp_col.B += ratio * obj->alb.rd * B * light_source->col.B * max(0,dot(n_b,s));
+        tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n_b,ds));
+        tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n_b,ds));
+        tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n_b,ds));
+       } else {
+    //    tmp_col.R += ratio * obj->alb.rd * R * light_source->col.R * max(0,dot(n,s));
+    //    tmp_col.G += ratio * obj->alb.rd * G * light_source->col.G * max(0,dot(n,s));
+    //    tmp_col.B += ratio * obj->alb.rd * B * light_source->col.B * max(0,dot(n,s));
+        tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n,ds));
+        tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n,ds));
+        tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n,ds));
+       }
+
+       // Setup for calculating specular component of light
+       spec = (2 * dot(ds, n));
+       m = newPoint(spec * n->px, spec * n->py, spec * n->pz);
+       subVectors(ds, m);
+       normalize(m);
+
+       max_spec = max(0,dot(m,c));
+
+       // Applies the correct exponent alpha
+       for(i = 0; i < obj->shinyness; i++) {
+        m_a = m_a * max_spec;
+       }
+
+       // Adds specular light component
+    //   tmp_col.R += ratio * obj->alb.rs * R * light_source->col.R * m_a;
+    //   tmp_col.G += ratio * obj->alb.rs * G * light_source->col.G * m_a;
+    //   tmp_col.B += ratio * obj->alb.rs * B * light_source->col.B * m_a;
+       tmp_col.R += obj->alb.rs * R * (ALS->col.R/N) * m_a;
+       tmp_col.G += obj->alb.rs * G * (ALS->col.G/N) * m_a;
+       tmp_col.B += obj->alb.rs * B * (ALS->col.B/N) * m_a;
+//       k += 1;
+       free(m);
+      }
+/*
+         if(lambda_sh < 1 && lambda_sh > 0) {
+//         if(lambda_sh == 1) {
+//          fprintf(stderr,"Blocked\n");
+          k += 1;
+         }
+         else if(lambda_sh == 1) {
+//          k += 1;
+         }
+*/
+   // Free up allocated memory
+   //   free(s);
+     }
+
+
+/*
+     if(lambda_sh == 1) {
+      k += 1;
+     }
+*/
+
+    free(ray_sh);
+   }
+
+
+//   ratio = (double)k / N;
+//   fprintf(stderr,"ratio: %f\n", ratio);
+
+   // Set up variables for calculating multiple components below
+//   s = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
+//   s = newPoint(ds->px, ds->py, ds->pz);
+
+   // Be sure to update 'col' with the final colour computed here!
+
+//   subVectors(p, s);
+
+   // Need to normalize s below as it is operated on above
+//   normalize(s);
+
+   // Below checks if both sides can be illuminated and
+   // Updates diffuse component of light
+
+
+
+
+   // Below is for testing specular
+   // tmp_col.R += obj->alb.rs * m_a;
+   // tmp_col.G += obj->alb.rs * m_a;
+   // tmp_col.B += obj->alb.rs * m_a;
+
+
+   // Make the returned color equal the calculated color
+   col->R = tmp_col.R;
+   col->G = tmp_col.G;
+   col->B = tmp_col.B;
+
+
   }
+  // light_source = light_source->next;
 
-  // Setup for calculating specular component of light
-  spec = (2 * dot(s, n));
-  m = newPoint(spec * n->px, spec * n->py, spec * n->pz);
-  subVectors(s, m);
-  normalize(m);
-
-  max_spec = max(0,dot(m,c));
-
-  // Applies the correct exponent alpha
-  for(i = 0; i < obj->shinyness; i++) {
-   m_a = m_a * max_spec;
-  }
-
-  // Adds specular light component
-  tmp_col.R += obj->alb.rs * R * light_source->col.R * m_a;
-  tmp_col.G += obj->alb.rs * G * light_source->col.G * m_a;
-  tmp_col.B += obj->alb.rs * B * light_source->col.B * m_a;
-
-  // Below is for testing specular
-  // tmp_col.R += obj->alb.rs * m_a;
-  // tmp_col.G += obj->alb.rs * m_a;
-  // tmp_col.B += obj->alb.rs * m_a;
-
-
-  // Make the returned color equal the calculated color
-  col->R = tmp_col.R;
-  col->G = tmp_col.G;
-  col->B = tmp_col.B;
-
-  // Free up allocated memory
-  free(s);
-  free(c);
-  free(n_b);
-  free(m);
-
-  light_source = light_source->next;
+  ALS = ALS->next;
  }
- return;
 
+ free(c);
+ free(n_b);
+ free(ds);
+
+ return;
 }
 
 void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct object3D **obj, struct point3D *p, struct point3D *n, double *a, double *b)
@@ -320,6 +417,8 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
         rtShade(obj, &p, &n, ray, depth, a, b, col);
     }
 
+    // Below blocked-out code is the shadow code for a PLS
+/*
     // Loops through every light source
     while(light_source != NULL) {
 
@@ -342,33 +441,45 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
          }
      }
 
-     // Sets up variables for global component
-     c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
+*/
 
-     c->px = -c->px;
-     c->py = -c->py;
-     c->pz = -c->pz;
+    struct object3D *ALS = object_list;
 
-     normalize(c);
+    while(ALS != NULL) {
 
-     dx = ((2 * dot(c,&n)) * n.px);
-     dy = ((2 * dot(c,&n)) * n.py);
-     dz = ((2 * dot(c,&n)) * n.pz);
+     // If the object in the list is an area light source
+     if(ALS->isLightSource == 1) {
 
-     dg = newPoint(dx, dy, dz);
-     subVectors(c, dg);
+      // Sets up variables for global component
+      c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
 
-     ray_dg = newRay(&p, dg);
+      c->px = -c->px;
+      c->py = -c->py;
+      c->pz = -c->pz;
 
-     // Recursive call to obtain global component
-     rayTrace(ray_dg, depth, &I, obj);
+      normalize(c);
 
-     // Computes total color with the global component
-     col->R += obj->alb.rg * I.R;
-     col->G += obj->alb.rg * I.G;
-     col->B += obj->alb.rg * I.B;
+      dx = ((2 * dot(c,&n)) * n.px);
+      dy = ((2 * dot(c,&n)) * n.py);
+      dz = ((2 * dot(c,&n)) * n.pz);
 
-     light_source = light_source->next;
+      dg = newPoint(dx, dy, dz);
+      subVectors(c, dg);
+
+      ray_dg = newRay(&p, dg);
+
+      // Recursive call to obtain global component
+      rayTrace(ray_dg, depth, &I, obj);
+
+      // Computes total color with the global component
+      col->R += obj->alb.rg * I.R;
+      col->G += obj->alb.rg * I.G;
+      col->B += obj->alb.rg * I.B;
+
+     }
+
+     //   light_source = light_source->next;
+     ALS = ALS->next;
     }
 
     // The following if statements guarantee a reasonable color value
@@ -391,8 +502,8 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
       //col->B = (n.pz + 1)/2;
 
     // Frees up allocated memory
-    free(ds);
-    free(ray_sh);
+//    free(ds);
+//    free(ray_sh);
     free(c);
     free(dg);
     free(ray_dg);
@@ -545,7 +656,7 @@ int main(int argc, char *argv[])
 // randomize();
  srand(time(NULL));
  struct colourRGB aa_col;		// Return colour for anti-aliased pixels
- int alias_ray_num = 16;
+ int alias_ray_num = 32;
 
 
  fprintf(stderr,"Rendering row: ");
