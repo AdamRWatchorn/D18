@@ -802,6 +802,22 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z)
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////   
+
+
+// double rand_coord_x, rand_coord_y, coord_z = 0;
+
+ // Randomly generates number between -0.99 and 0.99
+ *x = ((double)(rand() % 200) / 100) - 1;
+ *y = ((double)(rand() % 200) / 100) - 1;
+
+ // z coordinate of canonical plane is always equal to zero
+ *z = 0;
+
+ // Transform coordinates from canonical plane to affinely transformed plane
+ matVecMult(plane->Tinv, x);
+ matVecMult(plane->Tinv, y);
+ matVecMult(plane->Tinv, z);
+
 }
 
 void sphereSample(struct object3D *sphere, double *x, double *y, double *z)

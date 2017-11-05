@@ -386,9 +386,9 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
 
 
      // Below code checks for correct transformed normal direction vectors
-      col->R = (n.px + 1)/2;
-      col->G = (n.py + 1)/2;
-      col->B = (n.pz + 1)/2;
+      //col->R = (n.px + 1)/2;
+      //col->G = (n.py + 1)/2;
+      //col->B = (n.pz + 1)/2;
 
     // Frees up allocated memory
     free(ds);
@@ -652,7 +652,6 @@ int main(int argc, char *argv[])
 
   } // end for i
  } // end for j
-
 
  fprintf(stderr,"\nDone!\n");
 

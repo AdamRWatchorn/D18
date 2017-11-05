@@ -80,6 +80,7 @@
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
 
+/*
  o=newCyl(.05,.95,.95,.75,.75,.95,.55,1,1,6);
 // o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
 // o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
@@ -94,6 +95,7 @@
  Translate(o,0,4,2);
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
+*/
 
  // Insert a single point light source. We set up its position as a point structure, and specify its
  // colour in terms of RGB (in [0,1]).
