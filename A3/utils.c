@@ -813,14 +813,6 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z)
  // z coordinate of canonical plane is always equal to zero
  *z = 0;
 
- // Transform coordinates from canonical plane to affinely transformed plane
- // Which will happen after this function is called in rtShade
-
-
-// matVecMult(plane->Tinv, x);
-// matVecMult(plane->Tinv, y);
-// matVecMult(plane->Tinv, z);
-
 }
 
 void sphereSample(struct object3D *sphere, double *x, double *y, double *z)
@@ -932,10 +924,60 @@ void texMap(struct image *img, double a, double b, double *R, double *G, double 
  // interpolation to obtain the texture colour.
  //////////////////////////////////////////////////
 
- *(R)=0;	// Returns black - delete this and
- *(G)=0;	// replace with your code to compute
- *(B)=0;	// texture colour at (a,b)
+ int ia,ib,ia2,ib2;      // Coordinates of interpolation vertices
+ double r1,g1,b1;        // Colour at the four vertex pixels
+ double r2,g2,b2;
+ double r3,g3,b3;
+ double r4,g4,b4;
+ double fracc_a, fracc_b;                // Location within 4-pixel region
+ double *ip=(double *)img->rgbdata;      // Pointer to double image data
+
+ // Obtain integer coordinates in terms of texture size. Ensure they will
+ // be within bounds
+ if (a<0) a=0; if (b<0) b=0; if (a>1) a=1; if (b>1) b=1;
+
+ fracc_a=(a*img->sx);
+ fracc_b=(b*img->sy);
+ ia=(int)fracc_a;
+ ib=(int)fracc_b;
+ if (ia>=img->sx) ia=img->sx-1;
+ if (ib>=img->sy) ib=img->sy-1;
+
+ fracc_a=fracc_a-ia;
+ fracc_b=fracc_b-ib;
+ if (fracc_a>0) ia2=ia+1; else ia2=ia;
+ if (fracc_b>0) ib2=ib+1; else ib2=ib;
+
+ if (ia2>=img->sx) ia2=img->sx-1;
+ if (ib2>=img->sy) ib2=img->sy-1;
+
+ r1=*(ip+((ia+(ib*img->sx))*3)+0);
+ g1=*(ip+((ia+(ib*img->sx))*3)+1);
+ b1=*(ip+((ia+(ib*img->sx))*3)+2);
+
+ r2=*(ip+((ia2+(ib*img->sx))*3)+0);
+ g2=*(ip+((ia2+(ib*img->sx))*3)+1);
+ b2=*(ip+((ia2+(ib*img->sx))*3)+2);
+
+ r3=*(ip+((ia+(ib2*img->sx))*3)+0);
+ g3=*(ip+((ia+(ib2*img->sx))*3)+1);
+ b3=*(ip+((ia+(ib2*img->sx))*3)+2);
+
+ r4=*(ip+((ia2+(ib2*img->sx))*3)+0);
+ g4=*(ip+((ia2+(ib2*img->sx))*3)+1);
+ b4=*(ip+((ia2+(ib2*img->sx))*3)+2);
+
+ *R=(1-fracc_b)*(((1-fracc_a)*r1)+(fracc_a*r2));
+ *R+=fracc_b*(((1-fracc_a)*r3)+(fracc_a*r4));
+
+ *G=(1-fracc_b)*(((1-fracc_a)*g1)+(fracc_a*g2));
+ *G+=fracc_b*(((1-fracc_a)*g3)+(fracc_a*g4));
+
+ *B=(1-fracc_b)*(((1-fracc_a)*b1)+(fracc_a*b2));
+ *B+=fracc_b*(((1-fracc_a)*b3)+(fracc_a*b4));
+
  return;
+
 }
 
 void alphaMap(struct image *img, double a, double b, double *alpha)
