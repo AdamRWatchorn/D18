@@ -502,13 +502,15 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   normalTransform(norm, n, sphere);
   normalize(n);
 
-  free(ray_t);
-  free(pint);
   free(norm);
 
  } else {
   *lambda = -1;
  }
+
+ // Free Allocated Memory
+ free(ray_t);
+ free(pint);
 
 }
 
@@ -582,6 +584,9 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
 
    free(ray_t);
    free(pint);
+   free(pintp);
+   free(bound);
+   free(norm);
 
    return;
   }
@@ -746,14 +751,15 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
   
  }*/
 
- free(p1);
- free(p2);
+// free(p1);
+// free(v);
+// free(p2);
+// free(ray_tp1);
  free(pintp);
  free(norm);
  free(bound);
  free(pint);
  free(ray_t);
- free(ray_tp1);
 
 }
 

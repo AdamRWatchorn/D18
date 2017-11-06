@@ -90,7 +90,8 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
 
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
- Scale(o,1,2,1);
+ //Scale(o,1,2,1);
+ Scale(o,2,4,1);
  RotateZ(o,PI/4);
  RotateX(o,PI/2);
  Translate(o,0,25.5,-3.5);

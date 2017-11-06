@@ -112,7 +112,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct object3D *ALS = object_list;
  struct point3D *s, *c, *m, *n_b;
  double spec, max_spec, m_a = 1.0, ratio;
- int i, j, N = 10, k;
+ int i, j, N = 200, k;
 
  double x, y, z;
 
@@ -129,7 +129,6 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  normalize(c); 
 
 
-// while(light_source != NULL) {
  while(ALS != NULL) {
   // If the object in the list is an area light source
   if(ALS->isLightSource == 1) {
@@ -163,22 +162,16 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
 
      if(obj_sh != NULL) {
-         // checks if the intersection is before the light source
+      // checks if the intersection is before the light source
       if(obj_sh->isLightSource) {
 
        normalize(ds);
 
        if(obj->frontAndBack == 1) {
-    //    tmp_col.R += ratio * obj->alb.rd * R * light_source->col.R * max(0,dot(n_b,s));
-    //    tmp_col.G += ratio * obj->alb.rd * G * light_source->col.G * max(0,dot(n_b,s));
-    //    tmp_col.B += ratio * obj->alb.rd * B * light_source->col.B * max(0,dot(n_b,s));
         tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n_b,ds));
         tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n_b,ds));
         tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n_b,ds));
        } else {
-    //    tmp_col.R += ratio * obj->alb.rd * R * light_source->col.R * max(0,dot(n,s));
-    //    tmp_col.G += ratio * obj->alb.rd * G * light_source->col.G * max(0,dot(n,s));
-    //    tmp_col.B += ratio * obj->alb.rd * B * light_source->col.B * max(0,dot(n,s));
         tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n,ds));
         tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n,ds));
         tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n,ds));
@@ -198,59 +191,18 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
        }
 
        // Adds specular light component
-    //   tmp_col.R += ratio * obj->alb.rs * R * light_source->col.R * m_a;
-    //   tmp_col.G += ratio * obj->alb.rs * G * light_source->col.G * m_a;
-    //   tmp_col.B += ratio * obj->alb.rs * B * light_source->col.B * m_a;
        tmp_col.R += obj->alb.rs * R * (ALS->col.R/N) * m_a;
        tmp_col.G += obj->alb.rs * G * (ALS->col.G/N) * m_a;
        tmp_col.B += obj->alb.rs * B * (ALS->col.B/N) * m_a;
-//       k += 1;
+
+       // m freed at earliest opportunity
        free(m);
       }
-/*
-         if(lambda_sh < 1 && lambda_sh > 0) {
-//         if(lambda_sh == 1) {
-//          fprintf(stderr,"Blocked\n");
-          k += 1;
-         }
-         else if(lambda_sh == 1) {
-//          k += 1;
-         }
-*/
-   // Free up allocated memory
-   //   free(s);
      }
 
-
-/*
-     if(lambda_sh == 1) {
-      k += 1;
-     }
-*/
-
+    // Free allocated shadow ray before looping
     free(ray_sh);
    }
-
-
-//   ratio = (double)k / N;
-//   fprintf(stderr,"ratio: %f\n", ratio);
-
-   // Set up variables for calculating multiple components below
-//   s = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
-//   s = newPoint(ds->px, ds->py, ds->pz);
-
-   // Be sure to update 'col' with the final colour computed here!
-
-//   subVectors(p, s);
-
-   // Need to normalize s below as it is operated on above
-//   normalize(s);
-
-   // Below checks if both sides can be illuminated and
-   // Updates diffuse component of light
-
-
-
 
    // Below is for testing specular
    // tmp_col.R += obj->alb.rs * m_a;
@@ -265,7 +217,6 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
 
   }
-  // light_source = light_source->next;
 
   ALS = ALS->next;
  }
@@ -387,6 +338,9 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct ray3D *ray_dg;
  double dx, dy, dz;
 
+ // ALS object
+ struct object3D *ALS = object_list;
+
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
 
@@ -416,34 +370,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
         // Shade component primarily focused on ambient, diffuse, and specular
         rtShade(obj, &p, &n, ray, depth, a, b, col);
     }
-
-    // Below blocked-out code is the shadow code for a PLS
-/*
-    // Loops through every light source
-    while(light_source != NULL) {
-
-     // Builds a ray pointed in the direction of the light source
-     ds = newPoint(light_source->p0.px, light_source->p0.py, light_source->p0.pz);
-     subVectors(&p, ds);
-     ray_sh = newRay(&p, ds);
-
-     // Finds closest intersection in the direction of the light source
-     findFirstHit(ray_sh, &lambda_sh, obj, &obj_sh, &p_sh, &n_sh, &a_sh, &b_sh);
-    
-
-     // checks if there is an intersection in the light source direction
-     if(obj_sh != NULL) {
-         // checks if the intersection is before the light source
-         if(lambda_sh < 1 && lambda_sh > 0) {
-             col->R = obj->alb.ra*obj->col.R;
-             col->G = obj->alb.ra*obj->col.G;
-             col->B = obj->alb.ra*obj->col.B;
-         }
-     }
-
-*/
-
-    struct object3D *ALS = object_list;
 
     while(ALS != NULL) {
 
@@ -476,9 +402,13 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
       col->G += obj->alb.rg * I.G;
       col->B += obj->alb.rg * I.B;
 
+      // Freeing allocated memory before the loop
+      free(c);
+      free(dg);
+      free(ray_dg);
+
      }
 
-     //   light_source = light_source->next;
      ALS = ALS->next;
     }
 
@@ -501,12 +431,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
       //col->G = (n.py + 1)/2;
       //col->B = (n.pz + 1)/2;
 
-    // Frees up allocated memory
-//    free(ds);
-//    free(ray_sh);
-    free(c);
-    free(dg);
-    free(ray_dg);
 
 }
 
@@ -656,7 +580,7 @@ int main(int argc, char *argv[])
 // randomize();
  srand(time(NULL));
  struct colourRGB aa_col;		// Return colour for anti-aliased pixels
- int alias_ray_num = 32;
+ int alias_ray_num = 64;
 
 
  fprintf(stderr,"Rendering row: ");
