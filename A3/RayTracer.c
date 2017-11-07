@@ -251,7 +251,7 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
 
     struct object3D *obj_search = object_list, *closest_obj = NULL;
     struct point3D *closest_p, *closest_n;
-    double closestLambda = INFINITY;
+    double closestLambda = INFINITY, closest_a, closest_b;
 
     // Creates new points to hold intermittent data
     closest_p = newPoint(0.0,  0.0, 0.0);
@@ -279,6 +279,8 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
                 closest_n->py = n->py;
                 closest_n->pz = n->pz;
 
+                closest_a = *a;
+                closest_b = *b;
             }
         }
 
@@ -296,6 +298,9 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
     n->px = closest_n->px;
     n->py = closest_n->py;
     n->pz = closest_n->pz;
+
+    *a = closest_a;
+    *b = closest_b;
 
     // Frees up allocated memory
     free(closest_p);

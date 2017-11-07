@@ -54,6 +54,9 @@
 								// * DO NOT * try to free image data loaded in this
 								// way, the cleanup function already provided will do
 								// this at the end.
+
+ //loadTexture(o,"ceres.ppm",1,&texture_list);
+
  
   insertObject(o,&object_list);			// <-- If you don't insert the object into the object list,
 						//     nothing happens! your object won't be rendered.
@@ -67,6 +70,9 @@
  RotateZ(o,-PI/1.5);
  Translate(o,-2.2,1.75,1.35);
  invert(&o->T[0][0],&o->Tinv[0][0]);
+
+// loadTexture(o,"earth.ppm",1,&texture_list);
+
  insertObject(o,&object_list);
 
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
@@ -78,6 +84,9 @@
  RotateX(o,PI/2);
  Translate(o,0,-4,5);
  invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ loadTexture(o,"greenbark.ppm",1,&texture_list);
+
  insertObject(o,&object_list);
 
 

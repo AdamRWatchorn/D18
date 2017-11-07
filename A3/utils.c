@@ -370,6 +370,10 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  rayPosition(ray_t, *lambda, v);
 
+ // calculate a and b mapping from intersection point
+ *a = (v->px + 1)/2;
+ *b = (v->py + 1)/2;
+
  subVectors(p12, v);
 
  // Set n to transformed normal
@@ -442,7 +446,7 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
  // TO DO: Complete this function.
  /////////////////////////////////
 
- double A, B, C, D, lambda1, lambda2;
+ double A, B, C, D, lambda1, lambda2, theta, phi;
  struct ray3D *ray_t;
  struct point3D *pint, *norm;
 
@@ -495,6 +499,17 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
 
   rayPosition(ray, *lambda, p);
   rayPosition(ray_t, *lambda, pint);
+
+  // calculate a and b mapping from intersection point
+/*
+//  theta = atan(pint->py/pint->px);
+  theta = atan(-pint->pz/pint->px);
+//  phi = atan(sqrt((pint->px*pint->px) + (pint->py*pint->py))/pint->pz);
+  phi = acos(-pint->py/sqrt((pint->px*pint->px) + (pint->py*pint->py) + (pint->pz*pint->pz)));
+
+  *a = (theta)/(2*PI);
+  *b = (phi + (PI/2))/PI;
+*/
 
   norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
   normalize(norm);
