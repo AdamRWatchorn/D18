@@ -87,7 +87,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct point3D *dt;
  struct ray3D *ray_tr;
  struct colourRGB ref_col;
- double n1, n2, ratio, tot_int_ref = 0;
+ double n1, n2, r, ctr, tot_int_ref = 0, crit_ang, inc_ang;
 
 
  // This will hold the colour as we process all the components of
@@ -209,53 +209,6 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
       }
      }
 
-    // have if determining if it is inside or out
-//      fprintf(stderr,"inside = %d\n",ray->inside);
-    if(obj->alpha != 1) {
-
-     if(!(ray->inside)) {
-      n1 = 1;
-      n2 = obj->r_index;
-      ray->inside = 1;
-     }
-     else {
-      n2 = 1;
-      n1 = obj->r_index;
-      ray->inside = 0;
-
-
-      normalize(&ray->d);
-      tot_int_ref = sin(acos(dot(n,&ray->d)))*n2/n1;
-
-     }
-
-     tmp_col.R *= obj->alpha;
-     tmp_col.G *= obj->alpha;
-     tmp_col.B *= obj->alpha;
-
-     ratio = n1/n2;
-
-     // For refraction, n1 = 1 when coming from air
-     dt->px = (ratio * ray->d.px) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->px);
-     dt->py = (ratio * ray->d.py) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->py);
-     dt->pz = (ratio * ray->d.pz) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->pz);
-
-     ray_tr->d.px = dt->px;
-     ray_tr->d.py = dt->py;
-     ray_tr->d.pz = dt->pz;
-
-     if(tot_int_ref < 1) {
-      rayTrace(ray_tr, (depth+1), &ref_col, obj);
-     
-
-      tmp_col.R += (1 - obj->alpha) * ref_col.R;
-      tmp_col.G += (1 - obj->alpha) * ref_col.G;
-      tmp_col.B += (1 - obj->alpha) * ref_col.B;
-     }
-
-
-    }
-
 
     // Free allocated shadow ray before looping
     free(ray_sh);
@@ -267,6 +220,79 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
    // tmp_col.B += obj->alb.rs * m_a;
 
 
+   // have if determining if it is inside or out
+   //      fprintf(stderr,"inside = %d\n",ray->inside);
+   if(obj->alpha != 1) {
+
+    normalize(&ray->d);
+
+    if(!(ray->inside)) {
+     n1 = 1;
+     n2 = obj->r_index;
+     ray->inside = 1;
+
+//      inc_ang = acos(dot(n,&ray->d));
+    }
+    else {
+     n2 = 1;
+     n1 = obj->r_index;
+     ray->inside = 0;
+
+//      inc_ang = acos(dot(n,&ray->d));
+     tot_int_ref = sin(acos(dot(n,&ray->d)))*n2/n1;
+
+    }
+   }
+
+/*
+
+     if(n1 > n2) {
+      crit_ang = asin(n2/n1);
+     }
+     else {
+      crit_ang = PI/2;
+     }
+
+
+     if(fabs(crit_ang) <= fabs(inc_ang)) {
+      tot_int_ref = 1;
+     }
+*/
+
+    tmp_col.R *= obj->alpha;
+    tmp_col.G *= obj->alpha;
+    tmp_col.B *= obj->alpha;
+
+    r = n1/n2;
+    ctr = -dot(n,&ray->d);
+
+    // For refraction, n1 = 1 when coming from air
+//     dt->px = (r * ray->d.px) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->px);
+//     dt->py = (r * ray->d.py) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->py);
+//     dt->pz = (r * ray->d.pz) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->pz);
+
+    // Corrected equations for refraction direction
+    dt->px = (r*ray->d.px) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n->px);
+    dt->py = (r*ray->d.py) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n->py);
+    dt->pz = (r*ray->d.pz) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n->pz);
+
+    ray_tr->d.px = dt->px;
+    ray_tr->d.py = dt->py;
+    ray_tr->d.pz = dt->pz;
+
+    // Transmission ray must pick up where old ray left off
+    ray_tr->inside = ray->inside;
+
+    if(tot_int_ref <= 1) {
+     rayTrace(ray_tr, (depth+1), &ref_col, obj);
+     
+
+     tmp_col.R += (1 - obj->alpha) * ref_col.R;
+     tmp_col.G += (1 - obj->alpha) * ref_col.G;
+     tmp_col.B += (1 - obj->alpha) * ref_col.B;
+    }
+
+  // Ends the lightsource if
   }
 
   ALS = ALS->next;
@@ -456,6 +482,7 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
       subVectors(c, dg);
 
       ray_dg = newRay(&p, dg);
+      ray_dg->inside = ray->inside;
 
       // Recursive call to obtain global component
       rayTrace(ray_dg, depth, &I, obj);
@@ -686,6 +713,9 @@ int main(int argc, char *argv[])
     // Create ray that leaves camera and intersects the plane at pc
     ray = newRay(&pc, &d);
 
+    // Ray is initialized outside of an object
+    ray->inside = 0;
+
     // Trace the ray
     rayTrace(ray, depth, &col, NULL);
 
@@ -721,6 +751,9 @@ int main(int argc, char *argv[])
         }
 
         alias_ray = newRay(&pc, &d);
+
+        // alias ray is initialized outside of an object
+        alias_ray->inside = 0;
 
         rayTrace(alias_ray, depth, &aa_col, NULL);
 

@@ -86,13 +86,13 @@
 
 //ra,rd,rs,rg,R,G,B,transparency,refInd,shiny
  o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
-// o=newSphere(.05,.95,.95,.0,.75,.95,.55,0.0,.8,6);
+// o=newSphere(.05,.95,.95,.75,.75,.95,.55,0.7,1.5,6);
 // o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
 // o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
 // o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
  //Scale(o,1.0,1.0,1.0);
- Scale(o,3,3,3);
- Translate(o,0.0,0.0,10.0);
+ Scale(o,4,4,4);
+ Translate(o,4.0,2.0,10.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  loadTexture(o,"Neptune.ppm",1,&texture_list);
@@ -100,7 +100,38 @@
  insertObject(o,&object_list);
 
 
+//ra,rd,rs,rg,R,G,B,transparency,refInd,shiny
+ o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
+// o=newSphere(.05,.95,.95,.75,.75,.95,.55,0.7,1.5,6);
+// o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
+// o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
+// o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
+ //Scale(o,1.0,1.0,1.0);
+ Scale(o,4,4,4);
+ Translate(o,-4.0,-2.0,12.0);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
 
+ loadTexture(o,"Venus2.ppm",1,&texture_list);
+
+ insertObject(o,&object_list);
+
+
+//ra,rd,rs,rg,R,G,B,transparency,refInd,shiny
+ o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
+// o=newSphere(.05,.95,.95,.75,.75,.95,.55,0.7,1.5,6);
+// o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
+// o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
+// o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
+ //Scale(o,1.0,1.0,1.0);
+ Scale(o,7,7,7);
+ Translate(o,-10.0,12.0,30.0);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ loadTexture(o,"Mars2.ppm",1,&texture_list);
+
+ insertObject(o,&object_list);
+
+/*
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
 // o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);		// For signature
 // o=newPlane(.1,.75,0,0,.55,.8,.75,1,1,2);		// For diffuse
@@ -110,14 +141,14 @@
 // RotateZ(o,PI/4);
 // RotateX(o,PI/2);
 // Translate(o,0,-4,5);
- Translate(o,0,0,25);
+ Translate(o,0,0,20);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  loadTexture(o,"hello.ppm",1,&texture_list);
 
  insertObject(o,&object_list);
 
-
+*/
 
 
 /*
@@ -126,6 +157,23 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
                   double r, double g, double b, struct object3D **o_list, struct pointLS **l_list)
 */
 
+/*
+ o = newPlane(1,0,0,0,1,1,1,1,1,1);
+
+ //Scale(o,1,2,1);
+ Scale(o,2,4,1);
+// RotateZ(o,PI/4);
+// RotateX(o,PI/2);
+ Translate(o,0,25.5,-3.5);
+// Translate(o,0,0,-5);
+// Translate(o,0,25.5,-10.0);
+// Translate(o,0,1,10);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ o->isLightSource = 1;
+
+ insertObject(o, &object_list);
+*/
 
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
@@ -133,8 +181,8 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
  Scale(o,2,4,1);
 // RotateZ(o,PI/4);
 // RotateX(o,PI/2);
-// Translate(o,0,25.5,-3.5);
- Translate(o,0,0,-5);
+ Translate(o,-10,25.5,-3.5);
+// Translate(o,0,0,-5);
 // Translate(o,0,25.5,-10.0);
 // Translate(o,0,1,10);
  invert(&o->T[0][0],&o->Tinv[0][0]);
