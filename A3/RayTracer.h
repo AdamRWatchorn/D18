@@ -66,6 +66,9 @@ struct ray3D{
 
 	/* You may add data here to keep track of any values associated */
 	/* with this ray when implementing advanced raytracing features */
+
+        int inside;
+
 };
 
 /*

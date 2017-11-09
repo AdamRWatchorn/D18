@@ -372,7 +372,7 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  // calculate a and b mapping from intersection point
  *a = (v->px + 1)/2;
- *b = (v->py + 1)/2;
+ *b = (-v->py + 1)/2;
 
  subVectors(p12, v);
 
@@ -503,19 +503,34 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
   // calculate a and b mapping from intersection point
 
 //  theta = atan(pint->py/pint->px);
+  theta = atan2(pint->py, pint->px);
 //  theta = atan(-pint->pz/pint->px);
 //  phi = atan(sqrt((pint->px*pint->px) + (pint->py*pint->py))/pint->pz);
+  phi = atan2(sqrt(((pint->px*pint->px) + (pint->py*pint->py))), pint->pz);
 //  phi = acos(-pint->py/sqrt((pint->px*pint->px) + (pint->py*pint->py) + (pint->pz*pint->pz)));
 
+  theta += PI;
+  phi -= PI/2;
+
+//  fprintf(stderr,"Theta = %f\n",theta);
+//  fprintf(stderr,"phi = %f\n",phi);
+
+  // Paco Method
+//  *a = (theta)/(2*PI);
 //  *a = (theta)/(2*PI);
 //  *b = (phi + (PI/2))/PI;
+//  *b = (phi)/PI;
+
+
+
 //  *b = (phi)/PI;
 
   norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
   normalize(norm);
 
+  // Not the Paco method, but it works
   *a = (asin(norm->px)/PI) + 0.5;
-  *b = (asin(norm->py)/PI) + 0.5;
+  *b = -(asin(norm->py)/PI) + 0.5;
 
   normalTransform(norm, n, sphere);
   normalize(n);

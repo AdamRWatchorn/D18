@@ -83,6 +83,13 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct pointLS *light_source = light_list;
 
 
+ // Variables for transmission/refraction
+ struct point3D *dt;
+ struct ray3D *ray_tr;
+ struct colourRGB ref_col;
+ double n1, n2, ratio, tot_int_ref = 0;
+
+
  // This will hold the colour as we process all the components of
  // the Phong illumination model
  tmp_col.R=0;
@@ -111,12 +118,14 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 // struct pointLS *light_source = light_list;
  struct object3D *ALS = object_list;
  struct point3D *s, *c, *m, *n_b;
- double spec, max_spec, m_a = 1.0, ratio;
+ double spec, max_spec, m_a = 1.0;
  int i, j, N = 200, k;
 
  double x, y, z;
 
  ds = newPoint(0,0,0);
+ dt = newPoint(0,0,0);
+ ray_tr = newRay(p,dt);
 
  // Set up variables for calculating multiple components below
  c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
@@ -200,6 +209,54 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
       }
      }
 
+    // have if determining if it is inside or out
+//      fprintf(stderr,"inside = %d\n",ray->inside);
+    if(obj->alpha != 1) {
+
+     if(!(ray->inside)) {
+      n1 = 1;
+      n2 = obj->r_index;
+      ray->inside = 1;
+     }
+     else {
+      n2 = 1;
+      n1 = obj->r_index;
+      ray->inside = 0;
+
+
+      normalize(&ray->d);
+      tot_int_ref = sin(acos(dot(n,&ray->d)))*n2/n1;
+
+     }
+
+     tmp_col.R *= obj->alpha;
+     tmp_col.G *= obj->alpha;
+     tmp_col.B *= obj->alpha;
+
+     ratio = n1/n2;
+
+     // For refraction, n1 = 1 when coming from air
+     dt->px = (ratio * ray->d.px) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->px);
+     dt->py = (ratio * ray->d.py) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->py);
+     dt->pz = (ratio * ray->d.pz) + ((ratio * dot(n, &ray->d)) - ((1 - ((ratio*ratio)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->pz);
+
+     ray_tr->d.px = dt->px;
+     ray_tr->d.py = dt->py;
+     ray_tr->d.pz = dt->pz;
+
+     if(tot_int_ref < 1) {
+      rayTrace(ray_tr, (depth+1), &ref_col, obj);
+     
+
+      tmp_col.R += (1 - obj->alpha) * ref_col.R;
+      tmp_col.G += (1 - obj->alpha) * ref_col.G;
+      tmp_col.B += (1 - obj->alpha) * ref_col.B;
+     }
+
+
+    }
+
+
     // Free allocated shadow ray before looping
     free(ray_sh);
    }
@@ -210,20 +267,21 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
    // tmp_col.B += obj->alb.rs * m_a;
 
 
-   // Make the returned color equal the calculated color
-   col->R = tmp_col.R;
-   col->G = tmp_col.G;
-   col->B = tmp_col.B;
-
-
   }
 
   ALS = ALS->next;
  }
 
+ // Make the returned color equal the calculated color
+ col->R = tmp_col.R;
+ col->G = tmp_col.G;
+ col->B = tmp_col.B;
+
  free(c);
  free(n_b);
  free(ds);
+ free(dt);
+ free(ray_tr);
 
  return;
 }
@@ -585,7 +643,7 @@ int main(int argc, char *argv[])
 // randomize();
  srand(time(NULL));
  struct colourRGB aa_col;		// Return colour for anti-aliased pixels
- int alias_ray_num = 64;
+ int alias_ray_num = 16;
 
 
  fprintf(stderr,"Rendering row: ");
