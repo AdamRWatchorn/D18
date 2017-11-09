@@ -90,6 +90,13 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  double n1, n2, r, ctr, tot_int_ref = 0, crit_ang, inc_ang;
 
 
+ // Variables for Global Reflection
+ struct point3D *dg;
+ struct ray3D *ray_dg;
+ double dx, dy, dz;
+ struct colourRGB Ig;
+
+
  // This will hold the colour as we process all the components of
  // the Phong illumination model
  tmp_col.R=0;
@@ -125,7 +132,9 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
  ds = newPoint(0,0,0);
  dt = newPoint(0,0,0);
+ dg = newPoint(0,0,0);
  ray_tr = newRay(p,dt);
+ ray_dg = newRay(p,dg);
 
  // Set up variables for calculating multiple components below
  c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
@@ -135,7 +144,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  c->py = -c->py;
  c->pz = -c->pz;
 
- normalize(c); 
+ normalize(c);
 
 
  while(ALS != NULL) {
@@ -214,50 +223,34 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
     free(ray_sh);
    }
 
-   // Below is for testing specular
+   // Below is for testing specular with no colour
    // tmp_col.R += obj->alb.rs * m_a;
    // tmp_col.G += obj->alb.rs * m_a;
    // tmp_col.B += obj->alb.rs * m_a;
 
 
-   // have if determining if it is inside or out
-   //      fprintf(stderr,"inside = %d\n",ray->inside);
+   // Check if object is transparent or can refract
    if(obj->alpha != 1) {
 
     normalize(&ray->d);
 
+    // Checks if the ray is inside or outside an object
     if(!(ray->inside)) {
      n1 = 1;
      n2 = obj->r_index;
      ray->inside = 1;
 
-//      inc_ang = acos(dot(n,&ray->d));
     }
     else {
      n2 = 1;
      n1 = obj->r_index;
      ray->inside = 0;
 
-//      inc_ang = acos(dot(n,&ray->d));
      tot_int_ref = sin(acos(dot(n,&ray->d)))*n2/n1;
 
     }
    }
 
-/*
-
-     if(n1 > n2) {
-      crit_ang = asin(n2/n1);
-     }
-     else {
-      crit_ang = PI/2;
-     }
-
-
-     if(fabs(crit_ang) <= fabs(inc_ang)) {
-      tot_int_ref = 1;
-     }
-*/
 
     tmp_col.R *= obj->alpha;
     tmp_col.G *= obj->alpha;
@@ -267,9 +260,6 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
     ctr = -dot(n,&ray->d);
 
     // For refraction, n1 = 1 when coming from air
-//     dt->px = (r * ray->d.px) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->px);
-//     dt->py = (r * ray->d.py) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->py);
-//     dt->pz = (r * ray->d.pz) + ((r * dot(n, &ray->d)) - ((1 - ((r*r)*sqrt(1 - (dot(n,&ray->d) * dot(n,&ray->d))))))*n->pz);
 
     // Corrected equations for refraction direction
     dt->px = (r*ray->d.px) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n->px);
@@ -285,12 +275,38 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 
     if(tot_int_ref <= 1) {
      rayTrace(ray_tr, (depth+1), &ref_col, obj);
-     
 
      tmp_col.R += (1 - obj->alpha) * ref_col.R;
      tmp_col.G += (1 - obj->alpha) * ref_col.G;
      tmp_col.B += (1 - obj->alpha) * ref_col.B;
     }
+
+
+      // Global Reflection
+      dx = ((2 * dot(c,n)) * n->px);
+      dy = ((2 * dot(c,n)) * n->py);
+      dz = ((2 * dot(c,n)) * n->pz);
+
+      dg->px = dx;
+      dg->py = dy;
+      dg->pz = dz;
+
+      subVectors(c, dg);
+
+      ray_dg->d.px = dg->px;
+      ray_dg->d.py = dg->py;
+      ray_dg->d.pz = dg->pz;
+
+      ray_dg->inside = ray->inside;
+
+      // Recursive call to obtain global component
+      rayTrace(ray_dg, (depth+1), &Ig, obj);
+
+      // Computes total color with the global component
+      tmp_col.R += obj->alb.rg * Ig.R;
+      tmp_col.G += obj->alb.rg * Ig.G;
+      tmp_col.B += obj->alb.rg * Ig.B;
+
 
   // Ends the lightsource if
   }
@@ -307,7 +323,9 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  free(n_b);
  free(ds);
  free(dt);
+ free(dg);
  free(ray_tr);
+ free(ray_dg);
 
  return;
 }
@@ -413,23 +431,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct colourRGB I;	// Colour returned by shading function
 
 
- // Variables for shadow
- struct ray3D *ray_sh;
- double lambda_sh;
- double a_sh,b_sh;
- struct object3D *obj_sh;
- struct point3D p_sh;
- struct point3D n_sh;
- struct point3D *ds;
- struct pointLS *light_source = light_list;
-
- struct point3D *c, *dg;
- struct ray3D *ray_dg;
- double dx, dy, dz;
-
- // ALS object
- struct object3D *ALS = object_list;
-
  if (depth>MAX_DEPTH)	// Max recursion depth reached. Return invalid colour.
  {
 
@@ -444,8 +445,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  // if you are unsure what to do here.
  ///////////////////////////////////////////////////////
 
-    depth += 1;
-
     // Finds closest intersection
     findFirstHit(ray, &lambda, Os, &obj, &p, &n, &a, &b);
 
@@ -456,50 +455,8 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
         col->B = 0;
         return;
     } else {
-        // Shade component primarily focused on ambient, diffuse, and specular
+        // All colour information done in rtShade
         rtShade(obj, &p, &n, ray, depth, a, b, col);
-    }
-
-    while(ALS != NULL) {
-
-     // If the object in the list is an area light source
-     if(ALS->isLightSource == 1) {
-
-      // Sets up variables for global component
-      c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
-
-      c->px = -c->px;
-      c->py = -c->py;
-      c->pz = -c->pz;
-
-      normalize(c);
-
-      dx = ((2 * dot(c,&n)) * n.px);
-      dy = ((2 * dot(c,&n)) * n.py);
-      dz = ((2 * dot(c,&n)) * n.pz);
-
-      dg = newPoint(dx, dy, dz);
-      subVectors(c, dg);
-
-      ray_dg = newRay(&p, dg);
-      ray_dg->inside = ray->inside;
-
-      // Recursive call to obtain global component
-      rayTrace(ray_dg, depth, &I, obj);
-
-      // Computes total color with the global component
-      col->R += obj->alb.rg * I.R;
-      col->G += obj->alb.rg * I.G;
-      col->B += obj->alb.rg * I.B;
-
-      // Freeing allocated memory before the loop
-      free(c);
-      free(dg);
-      free(ray_dg);
-
-     }
-
-     ALS = ALS->next;
     }
 
     // The following if statements guarantee a reasonable color value

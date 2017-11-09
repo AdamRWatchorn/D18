@@ -33,16 +33,16 @@
 
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
 
-/*
+
  o=newSphere(.05,.95,.35,.35,1,.25,.25,1,1,6);		// Initialize a sphere
 // o=newSphere(1,0,0,0,1,.25,.25,1,1,6);		// For signature
 // o=newSphere(.1,.95,0,0,1,.25,.25,1,1,6);		// For diffuse
 // o=newSphere(0,0,.95,0,1,.25,.25,1,1,6);		// For specular
-// Scale(o,1.5,.75,.75);					// Apply a few transforms (Translate * Rotate * Scale)
- Scale(o, 0.5, 0.5, 0.5);
+ Scale(o,1.5,.75,.75);					// Apply a few transforms (Translate * Rotate * Scale)
+// Scale(o, 0.5, 0.5, 0.5);
 // RotateZ(o,PI/4);					
-// Translate(o,2.0,2.5,1.5);
- Translate(o, 0.0,1.0,0.0);
+ Translate(o,2.0,2.5,1.5);
+// Translate(o, 0.0,1.0,0.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);			// Compute the inverse transform * DON'T FORGET TO DO THIS! *
 
  // If needed, this is how you load a texture map
@@ -64,9 +64,9 @@
   insertObject(o,&object_list);			// <-- If you don't insert the object into the object list,
 						//     nothing happens! your object won't be rendered.
 
-*/
 
-/*
+
+
 
  // That's it for defining a single sphere... let's add a couple more objects
  o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
@@ -78,11 +78,11 @@
  Translate(o,-2.2,1.75,1.35);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
- loadTexture(o,"greenbark.ppm",1,&texture_list);
+ loadTexture(o,"Venus2.ppm",1,&texture_list);
 
  insertObject(o,&object_list);
 
-*/
+/*
 
 //ra,rd,rs,rg,R,G,B,transparency,refInd,shiny
  o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
@@ -131,6 +131,8 @@
 
  insertObject(o,&object_list);
 
+*/
+
 /*
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
 // o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);		// For signature
@@ -150,6 +152,22 @@
 
 */
 
+ o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
+// o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);		// For signature
+// o=newPlane(.1,.75,0,0,.55,.8,.75,1,1,2);		// For diffuse
+// o=newPlane(0,0,.95,0,.55,.8,.75,1,1,2);		// For specular
+ Scale(o,11,11,11);
+// Scale(o,5,5,5);
+ RotateZ(o,PI/4);
+ RotateX(o,PI/2);
+ Translate(o,0,-4,5);
+// Translate(o,0,0,20);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ loadTexture(o,"greenbark.ppm",1,&texture_list);
+
+ insertObject(o,&object_list);
+
 
 /*
 void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
@@ -157,7 +175,7 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
                   double r, double g, double b, struct object3D **o_list, struct pointLS **l_list)
 */
 
-/*
+
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
  //Scale(o,1,2,1);
@@ -173,8 +191,9 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
  o->isLightSource = 1;
 
  insertObject(o, &object_list);
-*/
 
+
+/*
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
  //Scale(o,1,2,1);
@@ -191,6 +210,7 @@ void addAreaLight(double sx, double sy, double nx, double ny, double nz,\
 
  insertObject(o, &object_list);
 
+*/
 
 /*
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
