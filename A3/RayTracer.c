@@ -121,6 +121,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  // details about the shading model.
  //////////////////////////////////////////////////////////////
 
+
  // Variables for local light components
 // struct pointLS *light_source = light_list;
  struct object3D *ALS = object_list;
@@ -186,9 +187,12 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
        normalize(ds);
 
        if(obj->frontAndBack == 1) {
-        tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n_b,ds));
-        tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n_b,ds));
-        tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n_b,ds));
+//        tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n_b,ds));
+//        tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n_b,ds));
+//        tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,dot(n_b,ds));
+        tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,fabs(dot(n,ds)));
+        tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,fabs(dot(n,ds)));
+        tmp_col.B += obj->alb.rd * B * (ALS->col.B/N) * max(0,fabs(dot(n,ds)));
        } else {
         tmp_col.R += obj->alb.rd * R * (ALS->col.R/N) * max(0,dot(n,ds));
         tmp_col.G += obj->alb.rd * G * (ALS->col.G/N) * max(0,dot(n,ds));

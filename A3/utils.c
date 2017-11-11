@@ -330,6 +330,8 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  struct point3D *c1, *c2, *c3, *c4;
  double dot_prod_top, dot_prod_bot;
  int inside = 0;
+ // Color values for normal map
+ double nR,nG,nB;
 
  ray_t = newRay(&(ray->p0), &(ray->d));
 
@@ -376,10 +378,6 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  subVectors(p12, v);
 
- // Set n to transformed normal
- normalTransform(norm, n, plane);
- normalize(n);
-
  c1 = cross(e1, v);
 
  if(dot(c1, norm) >= 0) {
@@ -415,7 +413,22 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 
  if(inside != 4) {
   *lambda = -1;
- } 
+ }
+
+ if (plane->normalMap != NULL) {
+  // Set n to transformed normal
+  plane->textureMap(plane->normalMap,*a,*b,&nR,&nG,&nB);
+
+  norm->px = (2 * nR) - 1;
+  norm->py = (2 * nG) - 1;
+  norm->pz = (2 * nB) - 1;
+
+  normalize(norm);
+  }
+
+  normalTransform(norm,n,plane);
+  normalize(n);
+
 
  free(ray_t);
  free(norm);
@@ -875,7 +888,6 @@ void cylSample(struct object3D *cyl, double *x, double *y, double *z)
  // TO DO: Complete this function.
  /////////////////////////////////   
 }
-
 
 /////////////////////////////////
 // Texture mapping functions
