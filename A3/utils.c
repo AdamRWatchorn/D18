@@ -569,7 +569,7 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
  // TO DO: Complete this function.
  /////////////////////////////////  
 
- double A, B, C, D, lambda1, lambda2, lambda_far, interx, intery;
+ double A, B, C, D, lambda1, lambda2, lambda_close, lambda_far = 0, interx, intery;
  struct ray3D *ray_t, *ray_tp1;
  struct point3D *pint, *norm, *bound, *p1, *p2, *pintp;
 
@@ -608,25 +608,22 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
   if(lambda1 > 0 && lambda2 > 0) {
 
    if(lambda1 < lambda2) {
-    *lambda = lambda1;
+    lambda_close = lambda1;
     lambda_far = lambda2;
    }
    else if(lambda2 < lambda1) {
-    *lambda = lambda2;
+    lambda_close = lambda2;
     lambda_far = lambda1;
    }
   }
   else if(lambda1 > 0 && lambda2 < 0) {
-    *lambda = lambda1;
+    lambda_close = lambda1;
   }
   else if(lambda2 > 0 && lambda1 < 0) {
-    *lambda = lambda2;
+    lambda_close = lambda2;
   }
   else if(lambda1 < 0 && lambda2 < 0) {
    *lambda = -1;
-
-   flag_wall_close = 1;
-   flag_wall_far = 1;
 
    free(ray_t);
    free(pint);
@@ -639,62 +636,111 @@ void cylIntersect(struct object3D *cylinder, struct ray3D *r, double *lambda, st
 
   rayTransform(r, ray_t, cylinder);
 
-  rayPosition(r, *lambda, p);
-  rayPosition(ray_t, *lambda, pint);
-
+  rayPosition(r, lambda_close, p);
+  rayPosition(ray_t, lambda_close, pint);
+/*
   norm->px = 2 * pint->px;
   norm->py = 2 * pint->py;
-  norm->pz = 2 * pint->pz;
+  norm->pz = 0;
 
   normalize(norm);
 
   normalTransform(norm, n, cylinder);
   normalize(n);
-
+*/
 
  } else {
   *lambda = -1;
+
+  free(ray_t);
+  free(pint);
+  free(pintp);
+  free(bound);
+  free(norm);
+
+  return;
  }
 
- bound->px = p->px;
- bound->py = p->py;
- bound->pz = p->pz;
+//  bound->px = pint->px;
+//  bound->py = pint->py;
+//  bound->pz = pint->pz;
+
+  bound->px = p->px;
+  bound->py = p->py;
+  bound->pz = p->pz;
 
  matVecMult(cylinder->Tinv, bound);
+ *lambda = lambda_close;
 
  if(bound->pz > 1 || bound->pz < 0) {
+// if(pint->pz < 1 && pint->pz > 0) {
+//  *lambda = lambda_close;
   *lambda = -1;
   flag_wall_close = 1;
  }
+ else {
+//  *lambda = -1;
+//  flag_wall_close = 1;
+  *lambda = lambda_close;
 
- if(flag_wall_close) {
+   norm->px = 2 * bound->px;
+   norm->py = 2 * bound->py;
+   norm->pz = 0;
+
+   normalize(norm);
+
+   normalTransform(norm, n, cylinder);
+   normalize(n);
+ }
+
+ if(flag_wall_close && lambda_far > 0) {
 
 //  rayTransform(r, ray_t, cylinder);
 
   rayPosition(r, lambda_far, p);
   rayPosition(ray_t, lambda_far, pint);
 
+/*
   norm->px = 2 * pint->px;
   norm->py = 2 * pint->py;
-  norm->pz = 2 * pint->pz;
+  norm->pz = 0;
 
   normalize(norm);
 
   normalTransform(norm, n, cylinder);
   normalize(n);
+*/
 
- bound->px = p->px;
- bound->py = p->py;
- bound->pz = p->pz;
+//  bound->px = pint->px;
+//  bound->py = pint->py;
+//  bound->pz = pint->pz;
 
- matVecMult(cylinder->Tinv, bound);
+  bound->px = p->px;
+  bound->py = p->py;
+  bound->pz = p->pz;
 
- *lambda = lambda_far;
+  matVecMult(cylinder->Tinv, bound);
 
- if(bound->pz > 1 || bound->pz < 0) {
-  *lambda = -1;
-  flag_wall_far = 1;
- }
+  *lambda = lambda_far;
+
+  if(bound->pz > 1 || bound->pz < 0) {
+//  if(pint->pz < 1 && pint->pz > 0) {
+//   *lambda = lambda_far;
+   *lambda = -1;
+  }
+  else {
+   //*lambda = -1;
+   *lambda = lambda_far;
+
+   norm->px = 2 * bound->px;
+   norm->py = 2 * bound->py;
+   norm->pz = 0;
+
+   normalize(norm);
+
+   normalTransform(norm, n, cylinder);
+   normalize(n);
+  }
 
  }
 

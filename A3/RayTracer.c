@@ -233,9 +233,35 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
    // tmp_col.B += obj->alb.rs * m_a;
 
 
+      // Global Reflection
+      dx = ((2 * dot(c,n)) * n->px);
+      dy = ((2 * dot(c,n)) * n->py);
+      dz = ((2 * dot(c,n)) * n->pz);
+
+      dg->px = dx;
+      dg->py = dy;
+      dg->pz = dz;
+
+      subVectors(c, dg);
+
+      ray_dg->d.px = dg->px;
+      ray_dg->d.py = dg->py;
+      ray_dg->d.pz = dg->pz;
+
+      ray_dg->inside = ray->inside;
+
+      // Recursive call to obtain global component
+      rayTrace(ray_dg, (depth+1), &Ig, obj);
+
+      // Computes total color with the global component
+      tmp_col.R += obj->alb.rg * Ig.R;
+      tmp_col.G += obj->alb.rg * Ig.G;
+      tmp_col.B += obj->alb.rg * Ig.B;
+
+
    // Check if object is transparent or can refract
    if(obj->alpha != 1) {
-
+// fprintf(stderr,"Uh %f\n",obj->alpha);
     normalize(&ray->d);
 
     // Checks if the ray is inside or outside an object
@@ -253,7 +279,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
      tot_int_ref = sin(acos(dot(n,&ray->d)))*n2/n1;
 
     }
-   }
+   
 
 
     tmp_col.R *= obj->alpha;
@@ -284,32 +310,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
      tmp_col.G += (1 - obj->alpha) * ref_col.G;
      tmp_col.B += (1 - obj->alpha) * ref_col.B;
     }
-
-
-      // Global Reflection
-      dx = ((2 * dot(c,n)) * n->px);
-      dy = ((2 * dot(c,n)) * n->py);
-      dz = ((2 * dot(c,n)) * n->pz);
-
-      dg->px = dx;
-      dg->py = dy;
-      dg->pz = dz;
-
-      subVectors(c, dg);
-
-      ray_dg->d.px = dg->px;
-      ray_dg->d.py = dg->py;
-      ray_dg->d.pz = dg->pz;
-
-      ray_dg->inside = ray->inside;
-
-      // Recursive call to obtain global component
-      rayTrace(ray_dg, (depth+1), &Ig, obj);
-
-      // Computes total color with the global component
-      tmp_col.R += obj->alb.rg * Ig.R;
-      tmp_col.G += obj->alb.rg * Ig.G;
-      tmp_col.B += obj->alb.rg * Ig.B;
+   }
 
 
   // Ends the lightsource if
