@@ -144,15 +144,20 @@
 
 */
 
+
+
+
 /*
+ // Below is the refracting scene
+
 
  // Planar lightsource for original scene
  o = newPlane(1,0,0,0,1,1,1,1,1,1);
 
  //Scale(o,1,2,1);
  Scale(o,2,4,1);
-// RotateZ(o,PI/4);
-// RotateX(o,PI/2);
+ RotateZ(o,PI/4);
+ RotateX(o,PI/2);
  Translate(o,0,25.5,-3.5);
 // Translate(o,0,0,-5);
 // Translate(o,0,25.5,-10.0);
@@ -167,20 +172,23 @@
 // o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);		// For signature
 // o=newPlane(.1,.75,0,0,.55,.8,.75,1,1,2);		// For diffuse
 // o=newPlane(0,0,.95,0,.55,.8,.75,1,1,2);		// For specular
- Scale(o,11,11,11);
+ Scale(o,60,60,60);
 // Scale(o,5,5,5);
 // RotateZ(o,PI/4);
 // RotateX(o,PI/2);
 // Translate(o,0,-4,5);
- Translate(o,0,0,20);
+ Translate(o,0,0,30);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
- loadTexture(o,"hello.ppm",1,&texture_list);
+// loadTexture(o,"hello.ppm",1,&texture_list);
+ loadTexture(o,"154.ppm",1,&texture_list);
+
+// loadTexture(o,"154_norm.ppm",2,&texture_list);
 
  insertObject(o,&object_list);
 
 //ra,rd,rs,rg,R,G,B,transparency,refInd,shiny
- o=newSphere(.05,.95,.95,0,.75,.95,.55,0.7,1.7,6);
+ o=newSphere(.05,.95,.95,0,.75,.95,.55,0.6,5.4,6);
 // o=newSphere(.05,.95,.95,.75,.75,.95,.55,0.7,1.5,6);
 // o=newSphere(1,0,0,0,.75,.95,.55,1,1,6);		// For signature
 // o=newSphere(.1,.95,0,0,.75,.95,.55,1,1,6);		// For diffuse
@@ -194,12 +202,15 @@
 
  insertObject(o,&object_list);
 
-*/
 
+*/
 // double *M1[4][4];
 
 
- struct object3D *m1;
+
+ // Below is the nice fully built scene
+
+ struct object3D *m1, *m2;
 
  // Left wall
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
@@ -223,6 +234,23 @@
  loadTexture(o,"154_norm.ppm",2,&texture_list);
 
  insertObject(o,&object_list);
+
+
+/*
+ o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
+ RotateX(o,-PI/4);
+ Translate(o,-1,0,0);
+
+ matMult(m1->T,o->T);
+
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+ loadTexture(o,"220.ppm",1,&texture_list);
+
+ loadTexture(o,"220_norm.ppm",2,&texture_list);
+
+ insertObject(o,&object_list);
+*/
 
  // Back Wall
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
@@ -292,6 +320,8 @@
 // Translate(o,0,0,20);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
+// m2 = o;
+
 // loadTexture(o,"greenbark.ppm",1,&texture_list);
 
  loadTexture(o,"151.ppm",1,&texture_list);
@@ -300,6 +330,30 @@
 
  insertObject(o,&object_list);
 
+ // Top Wooden plane
+ o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);
+// o=newPlane(1,0,0,0,.55,.8,.75,1,1,2);		// For signature
+// o=newPlane(.1,.75,0,0,.55,.8,.75,1,1,2);		// For diffuse
+// o=newPlane(0,0,.95,0,.55,.8,.75,1,1,2);		// For specular
+// Scale(o,14,14,14);
+// Scale(o,5,5,5);
+// RotateZ(o,PI/4);
+// RotateX(o,PI/2);
+ Scale(o,14,14,14);
+ RotateX(o,PI/2);
+ Translate(o,0,7,0);
+
+// matMult(m2->T,o->T);
+// Translate(o,0,0,20);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+
+// loadTexture(o,"greenbark.ppm",1,&texture_list);
+
+ loadTexture(o,"236.ppm",1,&texture_list);
+
+ loadTexture(o,"236_norm.ppm",2,&texture_list);
+
+ insertObject(o,&object_list);
 
 
 
@@ -310,7 +364,7 @@
 // o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
  Scale(o,.8,.8,.8);
 // Scale(o,7,7,7);
- Translate(o,-3.0,-6.0,6.0);
+ Translate(o,-3.0,-3.0,6.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  loadTexture(o,"Neptune.ppm",1,&texture_list);
@@ -325,7 +379,7 @@
 // o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
  //Scale(o,1.0,1.0,1.0);
 // Scale(o,7,7,7);
- Translate(o,0.0,-6.0,6.0);
+ Translate(o,0.0,-2.0,6.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  loadTexture(o,"Mars2.ppm",1,&texture_list);
@@ -341,7 +395,7 @@
 // o=newSphere(0,0,.95,0,.75,.95,.55,1,1,6);		// For specular
  //Scale(o,1.0,1.0,1.0);
 // Scale(o,7,7,7);
- Translate(o,3.0,-4.0,6.0);
+ Translate(o,3.0,-1.0,6.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);
 
  loadTexture(o,"Venus2.ppm",1,&texture_list);

@@ -87,7 +87,7 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  struct point3D *dt;
  struct ray3D *ray_tr;
  struct colourRGB ref_col;
- double n1, n2, r, ctr, tot_int_ref = 0, crit_ang, inc_ang;
+ double n1, n2, r, ctr, tot_int_ref = 0.0, crit_ang, inc_ang;
 
 
  // Variables for Global Reflection
