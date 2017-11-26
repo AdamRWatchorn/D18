@@ -69,6 +69,14 @@ inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, 
  ///////////////////////////////////////////
  // TO DO: Complete this function
  ///////////////////////////////////////////
+
+ ray_transformed->d.pw = 0;
+
+ matVecMult(obj->Tinv, &(ray_transformed->p0));
+
+ matVecMult(obj->Tinv, &(ray_transformed->d));
+
+ ray_transformed->d.pw = 1;
   
 }
 
@@ -82,6 +90,40 @@ inline void normalTransform(struct point3D *n_orig, struct point3D *n_transforme
  // TO DO: Complete this function
  ///////////////////////////////////////////
     
+ n_transformed->px = n_orig->px;
+ n_transformed->py = n_orig->py;
+ n_transformed->pz = n_orig->pz;
+ n_transformed->pw = 0;
+
+
+ double transpose[4][4];
+
+ transpose[0][0]=obj->Tinv[0][0];
+ transpose[1][1]=obj->Tinv[1][1];
+ transpose[2][2]=obj->Tinv[2][2];
+ transpose[3][3]=obj->Tinv[3][3];
+
+ transpose[0][1]=obj->Tinv[1][0];
+ transpose[1][0]=obj->Tinv[0][1];
+
+ transpose[0][2]=obj->Tinv[2][0];
+ transpose[2][0]=obj->Tinv[0][2];
+
+ transpose[0][3]=obj->Tinv[3][0];
+ transpose[3][0]=obj->Tinv[0][3];
+
+ transpose[1][2]=obj->Tinv[2][1];
+ transpose[2][1]=obj->Tinv[1][2];
+
+ transpose[1][3]=obj->Tinv[3][1];
+ transpose[3][1]=obj->Tinv[1][3];
+
+ transpose[2][3]=obj->Tinv[3][2];
+ transpose[3][2]=obj->Tinv[2][3];
+
+ matVecMult(transpose, n_transformed);
+
+ n_transformed->pw = 1;
 }
 
 /////////////////////////////////////////////
@@ -196,6 +238,36 @@ struct object3D *newCyl(double diffPct, double reflPct, double tranPct, double r
  // TO DO:
  //	Complete the code to create and initialize a new cylinder object.
  ///////////////////////////////////////////////////////////////////////////////////////  
+
+ struct object3D *cylinder=(struct object3D *)calloc(1,sizeof(struct object3D));
+
+ if (!cylinder) fprintf(stderr,"Unable to allocate new cylinder, out of memory!\n");
+ else
+ {
+  cylinder->diffPct=diffPct;
+  cylinder->reflPct=reflPct;
+  cylinder->tranPct=tranPct;
+  cylinder->col.R=r;
+  cylinder->col.G=g;
+  cylinder->col.B=b;
+  cylinder->refl_sig=refl_sig;
+  cylinder->r_index=r_index;
+  cylinder->intersect=&cylIntersect;
+  cylinder->surfaceCoords=&cylCoordinates;
+  cylinder->randomPoint=&cylSample;
+  cylinder->texImg=NULL;
+  cylinder->normalMap=NULL;
+  memcpy(&cylinder->T[0][0],&eye4x4[0][0],16*sizeof(double));
+  memcpy(&cylinder->Tinv[0][0],&eye4x4[0][0],16*sizeof(double));
+  cylinder->textureMap=&texMap;
+  cylinder->frontAndBack=0;
+  cylinder->normalMapped=0;
+  cylinder->isCSG=0;
+  cylinder->isLightSource=0;
+  cylinder->LSweight=1.0;
+  cylinder->CSGnext=NULL;
+  cylinder->next=NULL; }
+ return(cylinder);
   
 }
 
@@ -215,6 +287,129 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  // TO DO: Complete this function.
  /////////////////////////////////
    
+ struct ray3D *ray_t;
+ struct point3D *p1, *p12, *p2, *p3, *p4, *e1, *e2, *e3, *e4, *norm, *v;
+ struct point3D *c1, *c2, *c3, *c4;
+ double dot_prod_top, dot_prod_bot;
+ int inside = 0;
+ // Color values for normal map
+ double nR,nG,nB;
+
+ ray_t = newRay(&(ray->p0), &(ray->d));
+
+ norm = newPoint(0.0, 0.0, 1.0);
+
+ p1 = newPoint(1.0, 1.0, 0.0);
+
+ p12 = newPoint(1.0, 1.0, 0.0);
+
+ p2 = newPoint(-1.0, 1.0, 0.0);
+
+ p3 = newPoint(-1.0, -1.0, 0.0);
+
+ p4 = newPoint(1.0, -1.0, 0.0);
+
+ e1 = newPoint(-2.0, 0.0, 0.0);
+
+ e2 = newPoint(0.0, -2.0, 0.0);
+
+ e3 = newPoint(2.0, 0.0, 0.0);
+
+ e4 = newPoint(0.0, 2.0, 0.0);
+
+ rayTransform(ray, ray_t, plane);
+
+ subVectors(&(ray_t->p0), p1);
+
+ // Getting values for dot products preemptively
+ dot_prod_top = dot(p1, norm);
+ dot_prod_bot = dot(&(ray_t->d), norm);
+
+ *lambda = (dot_prod_top / dot_prod_bot);
+
+ rayPosition(ray, *lambda, p);
+
+ // Creating new point for intersection
+ v = newPoint(p->px, p->py, p->pz);
+
+ rayPosition(ray_t, *lambda, v);
+
+ // calculate a and b mapping from intersection point
+ *a = (v->px + 1)/2;
+ *b = (-v->py + 1)/2;
+
+ subVectors(p12, v);
+
+ c1 = cross(e1, v);
+
+ if(dot(c1, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p2, v);
+
+ c2 = cross(e2, v);
+
+ if(dot(c2, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p3, v);
+
+ c3 = cross(e3, v);
+
+ if(dot(c3, norm) >= 0) {
+  inside += 1;
+ }
+
+ rayPosition(ray_t, *lambda, v);
+ subVectors(p4, v);
+
+ c4 = cross(e4, v);
+
+ if(dot(c4, norm) >= 0) {
+  inside += 1;
+ }
+
+ if(inside != 4) {
+  *lambda = -1;
+ }
+
+ if (plane->normalMap != NULL) {
+  // Set n to transformed normal
+  plane->textureMap(plane->normalMap,*a,*b,&nR,&nG,&nB);
+
+  norm->px = (2 * nR) - 1;
+  norm->py = (2 * nG) - 1;
+  norm->pz = (2 * nB) - 1;
+
+  normalize(norm);
+  }
+
+  normalTransform(norm,n,plane);
+  normalize(n);
+
+
+ free(ray_t);
+ free(norm);
+ free(p1);
+ free(p12);
+ free(p2);
+ free(p3);
+ free(p4);
+ free(e1);
+ free(e2);
+ free(e3);
+ free(e4);
+ free(v);
+ free(c1);
+ free(c2);
+ free(c3);
+ free(c4);
+
+
 }
 
 void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda, struct point3D *p, struct point3D *n, double *a, double *b)
@@ -225,6 +420,106 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////
+
+ double A, B, C, D, lambda1, lambda2, theta, phi;
+ struct ray3D *ray_t;
+ struct point3D *pint, *norm;
+
+ // Creating a new point to help find normal
+ pint = newPoint(0.0, 0.0, 0.0);
+
+ // create a transformed ray to intersect with unit sphere
+ ray_t = newRay(&(ray->p0), &(ray->d));
+ rayTransform(ray, ray_t, sphere);
+
+ A = dot(&(ray_t->d), &(ray_t->d));
+
+ B = (dot(&(ray_t->p0), &(ray_t->d)));
+
+ C = (dot(&(ray_t->p0), &(ray_t->p0)) - 1);
+
+ D = ((B * B) - (A * C));
+
+ // else covers the case of no intersections
+ if(D >= 0) {
+
+
+  lambda1 = ((-(B / A)) + (sqrt(D) / A));
+
+  lambda2 = ((-(B / A)) - (sqrt(D) / A));
+
+  if(lambda1 > 0 && lambda2 > 0) {
+
+   if(lambda1 < lambda2) {
+    *lambda = lambda1;
+   }
+   else if(lambda2 < lambda1) {
+    *lambda = lambda2;
+   }
+  }
+  else if(lambda1 > 0 && lambda2 < 0) {
+    *lambda = lambda1;
+  }
+  else if(lambda2 > 0 && lambda1 < 0) {
+    *lambda = lambda2;
+  }
+  else if(lambda1 < 0 && lambda2 < 0) {
+   *lambda = -1;
+
+   free(ray_t);
+   free(pint);
+
+   return;
+  }
+
+  rayPosition(ray, *lambda, p);
+  rayPosition(ray_t, *lambda, pint);
+
+  // calculate a and b mapping from intersection point
+
+//  theta = atan(pint->py/pint->px);
+  theta = atan2(pint->py, pint->px);
+//  theta = atan(-pint->pz/pint->px);
+//  phi = atan(sqrt((pint->px*pint->px) + (pint->py*pint->py))/pint->pz);
+  phi = atan2(sqrt(((pint->px*pint->px) + (pint->py*pint->py))), pint->pz);
+//  phi = acos(-pint->py/sqrt((pint->px*pint->px) + (pint->py*pint->py) + (pint->pz*pint->pz)));
+
+  theta += PI;
+  phi -= PI/2;
+
+//  fprintf(stderr,"Theta = %f\n",theta);
+//  fprintf(stderr,"phi = %f\n",phi);
+
+  // Paco Method
+//  *a = (theta)/(2*PI);
+//  *a = (theta)/(2*PI);
+//  *b = (phi + (PI/2))/PI;
+//  *b = (phi)/PI;
+
+
+
+//  *b = (phi)/PI;
+
+  norm = newPoint(2 * pint->px, 2 * pint->py, 2 * pint->pz);
+  normalize(norm);
+
+  // Not the Paco method, but it works
+  *a = (asin(norm->px)/PI) + 0.5;
+  *b = -(asin(norm->py)/PI) + 0.5;
+
+  normalTransform(norm, n, sphere);
+  normalize(n);
+
+  free(norm);
+
+ } else {
+  *lambda = -1;
+ }
+
+ // Free Allocated Memory
+ free(ray_t);
+ free(pint);
+
     
 }
 
@@ -283,7 +578,12 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z)
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////   
+ // Randomly generates number between -0.99 and 0.99
+ *x = (((double)(rand() % 200) / 100) - 1);
+ *y = (((double)(rand() % 200) / 100) - 1);
 
+ // z coordinate of canonical plane is always equal to zero
+ *z = 0;
 }
 
 void sphereSample(struct object3D *sphere, double *x, double *y, double *z)

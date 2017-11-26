@@ -66,6 +66,64 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  // reference of what to do in here
  /////////////////////////////////////////////////////////////
 
+    struct object3D *obj_search = object_list, *closest_obj = NULL;
+    struct point3D *closest_p, *closest_n;
+    double closestLambda = INFINITY, closest_a, closest_b;
+
+    // Creates new points to hold intermittent data
+    closest_p = newPoint(0.0,  0.0, 0.0);
+    closest_n = newPoint(0.0, 0.0, 0.0);
+
+    // Search entire object list (just removed &s)
+    while(obj_search != NULL) {
+
+        // Only perform operations if object isn't the source
+        if(Os != obj_search) {
+
+            // Check for intersections
+            obj_search->intersect(obj_search, ray, lambda, p, n, a, b);
+
+            // if sets closest lambda value thus far
+            if((*lambda > 0.0) && (*lambda < closestLambda)) {
+                closestLambda = *lambda;
+                closest_obj = obj_search;
+
+                closest_p->px = p->px;
+                closest_p->py = p->py;
+                closest_p->pz = p->pz;
+
+                closest_n->px = n->px;
+                closest_n->py = n->py;
+                closest_n->pz = n->pz;
+
+                closest_a = *a;
+                closest_b = *b;
+            }
+        }
+
+        obj_search = obj_search->next;
+    }
+
+    // Following three blocks guarantee no incorrect overwrites
+    *lambda = closestLambda;
+    *obj = closest_obj;
+
+    p->px = closest_p->px;
+    p->py = closest_p->py;
+    p->pz = closest_p->pz;
+
+    n->px = closest_n->px;
+    n->py = closest_n->py;
+    n->pz = closest_n->pz;
+
+    *a = closest_a;
+    *b = closest_b;
+
+    // Frees up allocated memory
+    free(closest_p);
+    free(closest_n);
+
+
     
 }
 
