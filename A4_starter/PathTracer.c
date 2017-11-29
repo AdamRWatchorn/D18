@@ -161,7 +161,21 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  // TO DO: Complete this function. Refer to the notes
  // if you are unsure what to do here.
  ///////////////////////////////////////////////////////
-   
+
+
+ // Finds closest intersection
+ findFirstHit(ray, &lambda, Os, &obj, &p, &n, &a, &b);
+
+ // If there is no intersection, set pixel colour to that of the background
+ if(obj == NULL) {
+    col->R = ray->Ir;
+    col->G = ray->Ig;
+    col->B = ray->Ib;
+    return;
+ }
+
+ 
+ 
 }
 
 int main(int argc, char *argv[])

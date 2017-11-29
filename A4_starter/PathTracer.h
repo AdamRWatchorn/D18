@@ -100,11 +100,11 @@ struct object3D{
 	double  T[4][4]; 		// T holds the transformation applied to this object.
 	double  Tinv[4][4];      	// Tinv holds the inverse transformation
 
-        // Below we set up space for a pointer to the intersection function for this object.
-        // Note that the intersection function must compute the lambda at the intersection, the
-        // intersection point p, the normal at that point n, and the texture coordinates (a,b).
-        // The texture coordinates are not used unless texImg!=NULL and a textureMap function
-        // has been provided
+    // Below we set up space for a pointer to the intersection function for this object.
+    // Note that the intersection function must compute the lambda at the intersection, the
+    // intersection point p, the normal at that point n, and the texture coordinates (a,b).
+    // The texture coordinates are not used unless texImg!=NULL and a textureMap function
+    // has been provided
 	void (*intersect)(struct object3D *obj, struct ray3D *ray, double *lambda, struct point3D *p, struct point3D *n, double *a, double *b);		
 
 	// Texture mapping function. Takes normalized texture coordinates (a,b) and returns the
@@ -112,13 +112,13 @@ struct object3D{
 	void (*textureMap)(struct image *img, double a, double b, double *R, double *G, double *B);
 
 	// Functions to return coordinates on the surface of the object. One takes as input the a and b
-        // parameters for the parametric function of the object and returns the (x,y,z) coordinates
-        // on the object surface. The second returns a uniformly random-sampled point on the surface.
-        // These are needed for Photon Mapping.
-        void (*surfaceCoords)(struct object3D *obj, double a, double b, double *x, double *y, double *z);
-        void (*randomPoint)(struct object3D *obj, double *x, double *y, double *z);
+    // parameters for the parametric function of the object and returns the (x,y,z) coordinates
+    // on the object surface. The second returns a uniformly random-sampled point on the surface.
+     // These are needed for Photon Mapping.
+    void (*surfaceCoords)(struct object3D *obj, double a, double b, double *x, double *y, double *z);
+    void (*randomPoint)(struct object3D *obj, double *x, double *y, double *z);
 		
-        struct image *texImg;				// Pointer to structure holding the texture for this object
+    struct image *texImg;				// Pointer to structure holding the texture for this object
 	struct image *normalMap;			// Normal map for this object
 	struct image *alphaMap;				// Alpha map for the object
 
