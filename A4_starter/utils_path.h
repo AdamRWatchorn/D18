@@ -201,6 +201,9 @@ void planeSample(struct object3D *plane, double *x, double *y, double *z);
 void sphereSample(struct object3D *plane, double *x, double *y, double *z);
 void cylSample(struct object3D *plane, double *x, double *y, double *z);
 
+// Added by Adam for BRDF of diffuse surfaces before Importance Sampling
+void hemisphereRandomSample(struct point3D *n, struct point3D *d);
+
 // Importance Sampling for BRDF of diffuse surfaces
 void cosWeightedSample(struct point3D *n, struct point3D *d);
 

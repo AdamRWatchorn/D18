@@ -174,6 +174,14 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
     return;
  }
 
+ // If ray hit lightsource
+ if(obj->isLightSource) {
+     col->R = ray->R * obj->col.R;
+     col->G = ray->G * obj->col.G;
+     col->B = ray->B * obj->col.B;
+     return;
+ }
+
  // Generate random number to determine if obj will act diffuse, reflective, or refractive
  double behaviour = drand48();
 
@@ -181,6 +189,16 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  if(behaviour < obj->diffPct) {
 
     // Randomly pick direction (no IS)
+    hemisphereRandomSample(&n, &ray->d);
+
+    // Update colour of ray based on diagram from tutorial
+    ray->R *= obj->col.R * dot(&n, &ray->d);
+    ray->G *= obj->col.G * dot(&n, &ray->d);
+    ray->B *= obj->col.B * dot(&n, &ray->d);
+    
+    // Trace the next ray
+    depth += 1;
+    PathTrace(ray,depth,col,obj,CEL);
 
  }
 
@@ -188,6 +206,18 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  // If obj acts reflective
  else if(behaviour < (obj->diffPct + obj->reflPct)) {
 
+    // Get perfect reflection direction
+
+    // Have a function that utilizes obj->refl_sig to create burnished reflection
+
+    // Update colour of ray based on diagram from tutorial
+    ray->R *= obj->col.R;
+    ray->G *= obj->col.G;
+    ray->B *= obj->col.B;
+
+    //Trace the next ray
+    depth += 1;
+    PathTrace(ray,depth,col,obj,CEL);
  }
 
  // If object acts refractive
@@ -202,11 +232,35 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
    // If reflects
    if(behaviour < Rt) {
+       // Get perfect reflection direction
+
+       // obj->relf_sig?
+
+       // Update colour of ray based on diagram from tutorial
+       ray->R *= obj->col.R;
+       ray->G *= obj->col.G;
+       ray->B *= obj->col.B;
+
+       //Trace the next ray
+       depth += 1;
+       PathTrace(ray,depth,col,obj,CEL);
 
    }
 
    // If refracts
    else {
+
+       // Get refraction direction
+
+       
+       // Update colour of ray based on diagram from tutorial
+       ray->R *= obj->col.R;
+       ray->G *= obj->col.G;
+       ray->B *= obj->col.B;
+
+       //Trace the next ray
+       depth += 1;
+       PathTrace(ray,depth,col,obj,CEL);
 
    }
 

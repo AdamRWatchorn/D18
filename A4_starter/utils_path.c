@@ -592,6 +592,55 @@ void cylSample(struct object3D *cyl, double *x, double *y, double *z)
  /////////////////////////////////   
 }
 
+void hemisphereRandomSample(struct point3D *n, struct point3D *d)
+{
+ // This function returns a randomly sampled direction over
+ // a hemisphere whose pole is the normal direction n. The
+ // sampled direction comes from a distribution weighted
+ // by the cosine of the angle between n and d.
+ // Use this for importance sampling for diffuse surfaces.
+
+ // Source for uniform random sampling over a sphere: Wolfram Alpha
+ // Uses drand() as that limits us to the hemisphere. Full sphere
+// would require a random number in range (-1, 1)
+  
+ double u1,r,theta,phi;
+ double x,y,z,c;
+ double v[4][4],R[4][4];
+ struct point3D nz,*cr;
+ char line[1024];
+ 
+ // Random sample on hemisphere with cosine-weighted distribution
+ u1=drand48();
+ r=sqrt(1 - (u1*u1));
+ theta=2*PI*drand48();
+ x=r*cos(theta);
+ y=r*sin(theta);
+ z=u1;
+ 
+ // Need a rotation matrix - start with identity
+ memset(&R[0][0],0,4*4*sizeof(double));
+ R[0][0]=1.0;
+ R[1][1]=1.0;
+ R[2][2]=1.0;
+ R[3][3]=1.0;
+
+ // Rotation based on cylindrical coordinate conversion
+ theta=atan2(n->py,n->px);
+ phi=acos(n->pz);
+ RotateYMat(R,phi);
+ RotateZMat(R,theta);
+
+ // Rotate d to align with normal 
+ d->px=x;
+ d->py=y;
+ d->pz=z;
+ d->pw=1.0;
+ matVecMult(R,d);
+ 
+ return;
+}
+
 //////////////////////////////////
 // Importance sampling for BRDF
 //////////////////////////////////
