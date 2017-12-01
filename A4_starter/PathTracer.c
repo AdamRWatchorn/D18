@@ -174,6 +174,43 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
     return;
  }
 
+ // Generate random number to determine if obj will act diffuse, reflective, or refractive
+ double behaviour = drand48();
+
+ // If obj acts diffuse
+ if(behaviour < obj->diffPct) {
+
+    // Randomly pick direction (no IS)
+
+ }
+
+
+ // If obj acts reflective
+ else if(behaviour < (obj->diffPct + obj->reflPct)) {
+
+ }
+
+ // If object acts refractive
+ else {
+
+   // Compute Fresnel Coefficients
+   double Rt;
+   double Rs;
+
+   // Generate random number to determine if ray refects or refracts
+   behaviour = drand48();
+
+   // If reflects
+   if(behaviour < Rt) {
+
+   }
+
+   // If refracts
+   else {
+
+   }
+
+ }
  
  
 }
