@@ -62,14 +62,14 @@ void buildScene(void)
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
 
- /*
+ 
  // Two spheres scene
  o=newSphere(0.0,0.0,1.0,.99,.99,.99,.01,1.54);		// Refract
  Scale(o,3.75,3.75,3.75);
  Translate(o,-5,-4.0,4.5);
  invert(&o->T[0][0],&o->Tinv[0][0]);
  insertObject(o,&object_list);
- */
+ 
 
  o=newSphere(0.0,1.0,0.0,.99,.99,.99,.05,2.47);		// Reflect
  Scale(o,3.75,3.75,3.75);

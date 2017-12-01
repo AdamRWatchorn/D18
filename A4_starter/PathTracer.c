@@ -232,6 +232,8 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
     free(c);
 
+    normalize(&ray->d);    
+
     ray->p0.px = p.px;
     ray->p0.py = p.py;
     ray->p0.pz = p.pz;
@@ -251,24 +253,59 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  // Object acts refractive
  else {
 
+   double n1 = ray->curr_r_index, n2;
+    
+   if(n1 == obj->r_index) {
+       n2 = 1.0;
+   } else {
+       n2 = obj->r_index;
+   }
+
+   normalize(&ray->d);   
+
    // Compute Fresnel Coefficients
-   double Rt;
-   double Rs;
+   double R0 = pow((n1 - n2) / (n1 + n2), 2);
+   double Rs = R0 + ((1 - R0)*pow(1 + dot(&n, &ray->d), 5));
 
    // Generate random number to determine if ray refects or refracts
    behaviour = drand48();
 
    // Refractive object reflects
-   if(behaviour < Rt) {
+   if(behaviour < Rs) {
+
+       // Setup for vector in negative ray direction
+       struct point3D *c;
+    
+       c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
+       c->px = -c->px;
+       c->py = -c->py;
+       c->pz = -c->pz;
+    
+       normalize(c);
+        
        // Get perfect reflection direction
+    
+       ray->d.px = ((2 * dot(c,&n)) * n.px);
+       ray->d.py = ((2 * dot(c,&n)) * n.py);
+       ray->d.pz = ((2 * dot(c,&n)) * n.pz);
+    
+       subVectors(c, &ray->d);
+    
+       free(c);
 
-       // obj->relf_sig?
-
+       normalize(&ray->d);
+       
+       ray->p0.px = p.px;
+       ray->p0.py = p.py;
+       ray->p0.pz = p.pz;
+    
+       // Have a function that utilizes obj->refl_sig to create burnished reflection
+    
        // Update colour of ray based on diagram from tutorial
        ray->R *= obj->col.R;
        ray->G *= obj->col.G;
        ray->B *= obj->col.B;
-
+    
        //Trace the next ray
        depth += 1;
        PathTrace(ray,depth,col,obj,CEL);
@@ -278,8 +315,21 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
    // Refractive object refracts
    else {
 
-       // Get refraction direction
+       ray->curr_r_index = n2;
 
+       double r = n1/n2;
+       double ctr = -dot(&n,&ray->d);
+
+       // Get refraction direction
+       ray->d.px = (r*ray->d.px) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n.px);
+       ray->d.py = (r*ray->d.py) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n.py);
+       ray->d.pz = (r*ray->d.pz) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n.pz);
+
+       normalize(&ray->d);       
+
+       ray->p0.px = p.px;
+       ray->p0.py = p.py;
+       ray->p0.pz = p.pz;
 
        // Update colour of ray based on diagram from tutorial
        ray->R *= obj->col.R;

@@ -179,6 +179,9 @@ inline struct ray3D *newRay(struct point3D *p0, struct point3D *d)
   ray->srcN.py=0;
   ray->srcN.pz=1;
   ray->srcN.pw=1;
+
+  // Added in order to keep track of non-nested refraction
+  ray->curr_r_index = 1.0;
  }
  return(ray);
 }
