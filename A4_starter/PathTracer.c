@@ -185,7 +185,7 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  // Generate random number to determine if obj will act diffuse, reflective, or refractive
  double behaviour = drand48();
 
- // If obj acts diffuse
+ // Obj acts diffuse
  if(behaviour < obj->diffPct) {
 
     // Randomly pick direction (no IS)
@@ -203,10 +203,28 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
  }
 
 
- // If obj acts reflective
+ // Obj acts reflective
  else if(behaviour < (obj->diffPct + obj->reflPct)) {
 
+    // Setup for vector in negative ray direction
+    struct point3D *c;
+
+    c = newPoint(ray->d.px, ray->d.py, ray->d.pz);
+    c->px = -c->px;
+    c->py = -c->py;
+    c->pz = -c->pz;
+
+    normalize(c);
+    
     // Get perfect reflection direction
+
+    ray->d.px = ((2 * dot(c,&n)) * n.px);
+    ray->d.py = ((2 * dot(c,&n)) * n.py);
+    ray->d.pz = ((2 * dot(c,&n)) * n.pz);
+
+    subVectors(c, &ray->d);
+
+    free(c);
 
     // Have a function that utilizes obj->refl_sig to create burnished reflection
 
@@ -220,7 +238,7 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
     PathTrace(ray,depth,col,obj,CEL);
  }
 
- // If object acts refractive
+ // Object acts refractive
  else {
 
    // Compute Fresnel Coefficients
@@ -230,7 +248,7 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
    // Generate random number to determine if ray refects or refracts
    behaviour = drand48();
 
-   // If reflects
+   // Refractive object reflects
    if(behaviour < Rt) {
        // Get perfect reflection direction
 
@@ -247,12 +265,12 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
    }
 
-   // If refracts
+   // Refractive object refracts
    else {
 
        // Get refraction direction
 
-       
+
        // Update colour of ray based on diagram from tutorial
        ray->R *= obj->col.R;
        ray->G *= obj->col.G;
