@@ -191,6 +191,12 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
     // Randomly pick direction (no IS)
     hemisphereRandomSample(&n, &ray->d);
 
+    normalize(&ray->d);
+
+    ray->p0.px = p.px;
+    ray->p0.py = p.py;
+    ray->p0.pz = p.pz;
+
     // Update colour of ray based on diagram from tutorial
     ray->R *= obj->col.R * dot(&n, &ray->d);
     ray->G *= obj->col.G * dot(&n, &ray->d);
@@ -225,6 +231,10 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
     subVectors(c, &ray->d);
 
     free(c);
+
+    ray->p0.px = p.px;
+    ray->p0.py = p.py;
+    ray->p0.pz = p.pz;
 
     // Have a function that utilizes obj->refl_sig to create burnished reflection
 
