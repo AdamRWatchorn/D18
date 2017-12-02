@@ -16,6 +16,7 @@
 #ifndef __PathTracer_header
 #define __PathTracer_header
 
+#define TOL 0.00001
 #define PI 3.14159265354
 #define MAX_D 15
 

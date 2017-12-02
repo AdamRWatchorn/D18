@@ -265,13 +265,13 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
    // Compute Fresnel Coefficients
    double R0 = pow((n1 - n2) / (n1 + n2), 2);
-   double Rs = R0 + ((1 - R0)*pow(1 + dot(&n, &ray->d), 5));
+   double Rs = R0 + ((1 - R0)*pow(1 - fabs(dot(&n, &ray->d)), 5));
 
    // Generate random number to determine if ray refects or refracts
    behaviour = drand48();
 
    // Refractive object reflects
-   if(behaviour < Rs) {
+   if(behaviour < Rs || sin(acos(dot(&n,&ray->d)))*n1/n2 > 1) {
 
        // Setup for vector in negative ray direction
        struct point3D *c;
@@ -313,12 +313,20 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
    }
 
    // Refractive object refracts
-   else {
+   else {    
 
        ray->curr_r_index = n2;
 
+
        double r = n1/n2;
        double ctr = -dot(&n,&ray->d);
+
+       if(n1 != 1.0) {
+         ctr = fabs(ctr);
+         n.px *= -1;
+         n.py *= -1;
+         n.pz *= -1;         
+       }
 
        // Get refraction direction
        ray->d.px = (r*ray->d.px) + (((r*ctr) - sqrt(1 - ((r*r)*(1 - (ctr*ctr)))))*n.px);
@@ -327,9 +335,9 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
        normalize(&ray->d);       
 
-       ray->p0.px = p.px;
-       ray->p0.py = p.py;
-       ray->p0.pz = p.pz;
+       ray->p0.px = p.px + TOL*ray->d.px;
+       ray->p0.py = p.py + TOL*ray->d.py;
+       ray->p0.pz = p.pz + TOL*ray->d.pz;
 
        // Update colour of ray based on diagram from tutorial
        ray->R *= obj->col.R;
@@ -338,7 +346,8 @@ void PathTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct objec
 
        //Trace the next ray
        depth += 1;
-       PathTrace(ray,depth,col,obj,CEL);
+       //PathTrace(ray,depth,col,obj,CEL);
+       PathTrace(ray,depth,col,NULL,CEL);
 
    }
 
